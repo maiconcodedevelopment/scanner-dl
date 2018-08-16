@@ -1,0 +1,32 @@
+h1,h2,h3,h4,h5,h6 , p , span{
+    font-family: 'Roboto', sans-serif;    
+}
+
+body{
+    margin: 0;
+    padding: 0;
+}
+
+.container__app{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    background-color: #19466f;
+}
+
+.container__app h1{
+    font-size: 20px;
+    color: white;
+    margin-left: 5px;
+}
+
+.container__app .container__app__box {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    width: 300px;
+    
+}
