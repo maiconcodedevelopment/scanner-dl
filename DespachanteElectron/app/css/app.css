@@ -1,0 +1,29 @@
+
+body{
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    background-color: #19466f;
+}
+
+.container .container__box h1{
+    color: white;
+    font-size: 20px;
+    font-family: 'Roboto';
+    margin-left: 15px;
+}
+
+.container .container__box{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}

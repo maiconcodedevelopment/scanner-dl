@@ -2,4 +2,5 @@ lerning/*.jpg
 lerning/*.jpeg
 lerning/*.png
 lerning/*.gif
-scanner/node_modules/
+scanner/node_modules
+DespachanteElectron/node_modules
