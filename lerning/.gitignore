@@ -1,6 +1,7 @@
 /__pycache__
-.idea
+/.idea
+/.vscode
 *.jpg
 *.jpeg
 *.png
-*.gif
+*.gif   

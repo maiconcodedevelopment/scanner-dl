@@ -1,4 +1,8 @@
+
+#reader past
 /reader/node_modules
+
+#lerning past
 /lerning/__pycache__
 /lerning/.idea
-/DespachanteElectron
+/lerning/.vscode
