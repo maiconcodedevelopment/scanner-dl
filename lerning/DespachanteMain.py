@@ -1,9 +1,9 @@
-from ScannerDespachante import ScannerDespachante
+import imutils
 import numpy as np
 import cv2
+
 from skimage import filters , io as shio
 import matplotlib.pyplot as plt
-
 
 m = ScannerDespachante(image='n.png')
 m.blacks()

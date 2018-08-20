@@ -1,6 +1,3 @@
-lerning/*.jpg
-lerning/*.jpeg
-lerning/*.png
-lerning/*.gif
-scanner/node_modules
-DespachanteElectron/node_modules
+/reader/node_modules
+/lerning/__pycache__
+/DespachanteElectron
