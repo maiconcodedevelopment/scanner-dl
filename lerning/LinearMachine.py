@@ -31,6 +31,14 @@ predict = linear.predict(x_test[0].reshape(1,-1))
 # for feature in features16:
     # fd = hog(feature.reshape((28,28)),orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),visualise=False)
     # features.append(image)
+print('--------')
+
+a = KNeighborsClassifier(n_neighbors=7)
+a.fit(x_train,y_train)
+pre = a.predict(x_train)
+print(pre)
+
+print('--------')
 
 print(m_features16[0])
 
@@ -41,6 +49,14 @@ for feature in m_features16:
     fd = hog(feature.reshape((28,28)),orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),visualise=False)
     m_features.append(fd)
 
+vals = range(1,30,2)
+accuracies = []
+
+model = mode = KNeighborsClassifier(n_neighbors=1)
+mode.fit(x_train,y_train)
+predicts = mode.predict(x_train)
+
+print(predicts)
 
 for k in range(1,30,2):
     model = KNeighborsClassifier(n_neighbors=k)
@@ -49,10 +65,16 @@ for k in range(1,30,2):
 
     score = model.score(x_test,y_test)
     print("% {0} ".format(score))
+    accuracies.append(score)
 
 
-print(m_features[0])
+i = int(numpy.argmax(accuracies))
+# print(m_features[0])
+mode = KNeighborsClassifier(n_neighbors=vals[i])
+mode.fit(x_train,y_train)
+predicts = mode.predict(x_train)
 
+print(predicts)
 #https://gurus.pyimagesearch.com/lesson-sample-k-nearest-neighbor-classification/
 #https://chrisalbon.com/machine_learning/basics/loading_scikit-learns_digits-dataset/
 

@@ -21,6 +21,7 @@ import pandas
 
 #skleran
 from sklearn import datasets
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import LinearSVC
 from sklearn import svm
@@ -59,6 +60,8 @@ class LerningDigits(object):
 
     def __init__(self):
         self.clf = LinearSVC()
+        self.neighnors = KNeighborsClassifier(n_neighbors=7)
+
         self.clfPack = None
 
         self.datasets = fetch_mldata("MNIST Original")
@@ -82,12 +85,13 @@ class LerningDigits(object):
     def startFit(self):
         if not self.host_features is None:
             self.clf.fit(self.host_features,self.labels)
+            self.neighnors.fit(self.host_features,self.labels)
             
     def saveLerning(self):
         joblib.dump(self.clf,"digits_cls.pkl",compress=3)
 
     def loadPkl(self):
-        self.clfPack = joblib.load("digits_cls.pkl")
+        self.clf = joblib.load("digits_cls.pkl")
         
 
         # return super(LerningDigits, self).__init__()
@@ -112,6 +116,7 @@ class ScannerDespachante(LerningDigits):
         self.startFeatures()
         self.startFit()
         self.saveLerning()
+        self.loadPkl()
 
         self.image = cv2.imread(image)
         self.image1 = self.image
@@ -436,6 +441,8 @@ class ScannerDespachante(LerningDigits):
 
         datas = []
 
+        train = KNeighborsClassifier(n_neighbors=2)
+
         #bunch
         for rect in reacts:
             cv2.rectangle(self.image, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (255, 0, 0), 3) 
@@ -454,13 +461,27 @@ class ScannerDespachante(LerningDigits):
             datas.append(hoi_hog_fd)
 
             nbr = self.clf.predict(numpy.array([hoi_hog_fd],'float64'))
+            re = self.neighnors.predict(numpy.array([hoi_hog_fd],'float64'))
+
+            print("este daqui {0}".format(re))
+
             cv2.putText(self.image, str(int(nbr[0])), (rect[0], rect[1]),cv2.FONT_HERSHEY_DUPLEX, 2, (255, 0, 0), 3)
         
         # cv2.imshow("machine",gray)
         # cv2.waitKey(0)
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
+        datas = numpy.array(datas,'float64')
+        train.fit(datas,numpy.array([0,0,0,9,7,8,6,3,8,0,1,8,0]))
+
+        p = train.predict(datas.reshape(1,-1))
+
+        print("est : {0}".format(p))
+
+        # joblib.dump(train,"digits_cls_renavam.pkl",compress=3)
+
         print(datas[0])
+        
         print('quantity : {0}'.format(datas[0]))
         self.showImage()
         # cv2.destroyAllWindows()
@@ -549,7 +570,7 @@ if __name__ == "__main__" :
 
     # print(digits)
 
-    img = ScannerDespachante(image='images/Scanner_20180822 (2).png')
+    img = ScannerDespachante(image='images/Scanner_20180822 (3).png')
     # img.showImage()
     # img.findContours()
     # img.findContours()
