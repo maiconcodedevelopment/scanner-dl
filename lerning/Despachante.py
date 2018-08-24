@@ -75,6 +75,8 @@ class LerningDigits(object):
             fd = hog(feature.reshape((28,28)),orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),visualise=False)
             self.list_host_fd.append(fd)
 
+        print('-------- image list host --------')
+        print(self.list_host_fd[0])
         self.host_features = numpy.array(self.list_host_fd,'float64')
 
     def startFit(self):
@@ -434,20 +436,23 @@ class ScannerDespachante(LerningDigits):
 
         datas = []
 
+        #bunch
         for rect in reacts:
             cv2.rectangle(self.image, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (255, 0, 0), 3) 
-            leng = int(rect[3] * 1.6)
+            leng = int(rect[3] * 1)
             pt1 = int(rect[1] + rect[3] // 2 - leng // 2)
             pt2 = int(rect[0] + rect[2] // 2 - leng // 2)
             roi = thresh[pt1:pt1+leng, pt2:pt2+leng]
 
             roi = cv2.resize(roi,(28,28),interpolation=cv2.INTER_AREA)
-            datas.append(roi)
             roi = cv2.dilate(roi,(3,3))
 
             # cv2.inshow('image',roi)
 
             hoi_hog_fd = hog(roi,orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),visualise=False)
+            
+            datas.append(hoi_hog_fd)
+
             nbr = self.clf.predict(numpy.array([hoi_hog_fd],'float64'))
             cv2.putText(self.image, str(int(nbr[0])), (rect[0], rect[1]),cv2.FONT_HERSHEY_DUPLEX, 2, (255, 0, 0), 3)
         
@@ -456,6 +461,7 @@ class ScannerDespachante(LerningDigits):
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
         print(datas[0])
+        print('quantity : {0}'.format(datas[0]))
         self.showImage()
         # cv2.destroyAllWindows()
         exit()
