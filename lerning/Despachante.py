@@ -24,6 +24,7 @@ import pandas
 
 #skleran
 from sklearn import datasets
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import LinearSVC
 from sklearn import svm
@@ -88,6 +89,8 @@ class LerningDigits(object):
         # self.model.fit(self.df['data'],self.df['target'])
 
         self.clf = LinearSVC()
+        self.neighnors = KNeighborsClassifier(n_neighbors=7)
+
         self.clfPack = None
         self.images = []
 
@@ -108,6 +111,8 @@ class LerningDigits(object):
             fd = hog(feature.reshape((28,28)),orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),visualise=False)
             self.list_host_fd.append(fd)
 
+        print('-------- image list host --------')
+        print(self.list_host_fd[0])
         self.host_features = numpy.array(self.list_host_fd,'float64')
         print(self.host_features[0])
         print("quantaty : {0}".format(len(self.host_features[0])))
@@ -115,6 +120,7 @@ class LerningDigits(object):
     def startFit(self):
         if not self.host_features is None:
             self.clf.fit(self.host_features,self.labels)
+            self.neighnors.fit(self.host_features,self.labels)
             
     def saveLerning(self):
         joblib.dump(self.clf,"digits_cls.pkl",compress=3)
@@ -475,6 +481,9 @@ class ScannerDespachante(LerningDigits):
         imagesreact = numpy.array([])
         predicts = []
 
+        train = KNeighborsClassifier(n_neighbors=2)
+
+        #bunch
         for rect in reacts:
             cv2.rectangle(self.image, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (255, 0, 0), 3) 
             leng = int(rect[3] * 1)
