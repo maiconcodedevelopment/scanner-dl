@@ -1,5 +1,8 @@
+import os
 import cv2
+import csv
 import numpy
+import pickle
 
 #imutils
 import matplotlib
@@ -58,13 +61,43 @@ class FrameCamera(object):
 class LerningDigits(object):
 
     def __init__(self):
+        self.df = pandas.read_csv("fileMachine.csv")
+        self.model = LinearSVC()
+
+        data = self.df[self.df.columns[0:36]]
+        data = data.values
+        target = self.df['target'].values
+
+        print(target[target == 0])
+        print(target[target == 1])
+        print(target[target == 2])
+        print(target[target == 3])
+        print(target[target == 4])
+        print(target[target == 5])
+        print(target[target == 6])
+        print(target[target == 7])
+        print(target[target == 8])
+        print(target[target == 9])
+
+        self.model.fit(data,target)
+        print(data)
+        # exit()
+        # print(numpy.array(self.df['data']))
+
+        # exit()
+        # self.model.fit(self.df['data'],self.df['target'])
+
         self.clf = LinearSVC()
         self.clfPack = None
+        self.images = []
 
         self.datasets = fetch_mldata("MNIST Original")
 
         self.features = numpy.array(self.datasets.data,'int16')
         self.labels = numpy.array(self.datasets.target,'int')
+
+        print(self.features[0])
+        print("quantaty : {0}".format(len(self.features[0])))
 
         self.list_host_fd = []
         self.host_features = None
@@ -76,6 +109,8 @@ class LerningDigits(object):
             self.list_host_fd.append(fd)
 
         self.host_features = numpy.array(self.list_host_fd,'float64')
+        print(self.host_features[0])
+        print("quantaty : {0}".format(len(self.host_features[0])))
 
     def startFit(self):
         if not self.host_features is None:
@@ -85,8 +120,16 @@ class LerningDigits(object):
         joblib.dump(self.clf,"digits_cls.pkl",compress=3)
 
     def loadPkl(self):
-        self.clfPack = joblib.load("digits_cls.pkl")
+        self.clf = joblib.load("digits_cls.pkl")
+        # self.clfPack = joblib.load("features.pkl")
         
+    def train_image(self):
+        x_train , y_train , x_test , y_test  = train_test_split(self.features,self.labels,test_size=0.2,random_state=42)
+
+        print(x_train)
+        print(y_train)
+
+
 
         # return super(LerningDigits, self).__init__()
 
@@ -109,7 +152,6 @@ class ScannerDespachante(LerningDigits):
 
         self.startFeatures()
         self.startFit()
-        self.saveLerning()
 
         self.image = cv2.imread(image)
         self.image1 = self.image
@@ -189,7 +231,6 @@ class ScannerDespachante(LerningDigits):
         # print(longs)
 
         # self.image =  self.image1[y:y + h,x:x + w]
-        self.showImage()
         # print()
         # print(longs[:,2].max())
 
@@ -209,7 +250,6 @@ class ScannerDespachante(LerningDigits):
         print("altura : {0} , largura : {1}".format(altura,largura))
 
         # print("{:10.2f}".format(altura))
-        self.showImage()
 
         image =  cv2.resize(self.image,(largura,altura))
         self.image = image
@@ -248,7 +288,6 @@ class ScannerDespachante(LerningDigits):
 
         # print(a)
         # print(l)
-        self.showImage()
 
         altura = 200
         largura = int(((altura / ( a / 100)) / 100) * l)
@@ -431,31 +470,157 @@ class ScannerDespachante(LerningDigits):
         reacts = [ cv2.boundingRect(react) for react in cnts ]
         
         # print(reacts)
+        rex = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 5))
 
-        datas = []
+        imagesreact = numpy.array([])
+        predicts = []
 
         for rect in reacts:
             cv2.rectangle(self.image, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (255, 0, 0), 3) 
-            leng = int(rect[3] * 1.6)
+            leng = int(rect[3] * 1)
             pt1 = int(rect[1] + rect[3] // 2 - leng // 2)
             pt2 = int(rect[0] + rect[2] // 2 - leng // 2)
             roi = thresh[pt1:pt1+leng, pt2:pt2+leng]
 
-            roi = cv2.resize(roi,(28,28),interpolation=cv2.INTER_AREA)
-            datas.append(roi)
-            roi = cv2.dilate(roi,(3,3))
+            # if (rect[2] >= 10 and rect[2] <= 80) and (rect[3] >= 30 and rect[3] <= 90):
+            
+            # print("react 3 {0}".format(rect[3]))
 
-            # cv2.inshow('image',roi)
+            roi = cv2.resize(roi,(28,28),interpolation=cv2.INTER_AREA)
+            # roi = cv2.dilate(roi,(-2,-2))
+
+            # print('---------------------')
+            # print(roi)
+            # print('---------------------')
+            # dilation = cv2.morphologyEx(roi,cv2.MORPH_CLOSE,rex)
+
+            # cv2.imshow('image',roi)
+            # cv2.waitKey(0)
 
             hoi_hog_fd = hog(roi,orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),visualise=False)
-            nbr = self.clf.predict(numpy.array([hoi_hog_fd],'float64'))
-            cv2.putText(self.image, str(int(nbr[0])), (rect[0], rect[1]),cv2.FONT_HERSHEY_DUPLEX, 2, (255, 0, 0), 3)
-        
+            
+            # print('--------------------- hoh')
+            # print(hoi_hog_fd)
+            # print('--------------------- hoh')
+
+            if (rect[3] >= 50):
+                self.images.append(roi)
+                predict = self.model.predict(numpy.array([hoi_hog_fd], 'float64'))
+                print(predict)
+                cv2.putText(self.image, str(int(predict[0])), (rect[0], rect[1]),cv2.FONT_HERSHEY_DUPLEX, 2, (255, 0, 0), 3)
+
+            # cv2.imshow('image',roi)
+            # nbr = self.clf.predict(numpy.array([hoi_hog_fd],'float64'))
+            # predicts.append(nbr)
         # cv2.imshow("machine",gray)
         # cv2.waitKey(0)
-        # cv2.waitKey(0)
         # cv2.destroyAllWindows()
-        print(datas[0])
+        self.showImage()
+        self.image = thresh
+        # model_s = LinearSVC()
+        # model_s.fit(self.images,numpy.array([0,0,6,9,4,9,3,8,1,9,0]))
+        new_featues = []
+        for feature in self.images:
+            img = hog(feature.reshape((28,28)),orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),visualise=False)
+            new_featues.append(img)
+
+        # print(new_featues)
+        new_featues = numpy.array(new_featues,'float64')
+        # marc = [0,1,1,1,2,7,2,9,7,0,1]
+        # df = pandas.DataFrame(new_featues)
+        # df['data'] = new_featues
+        # df['target'] = marc
+        # self.df.append(df)
+        # self.df.to_csv("fileMachine1.csv")
+        # self.df = pandas.concat([self.df,df],sort=True)
+        # print(self.df)
+        # df.to_csv('fileMachine1.csv',index=False)
+
+        # print("quantidade de features : {0}".format(len(new_featues)))
+
+        # with open('cvfile.csv','w') as wireFile:
+            # whiter = csv.writer(wireFile)
+            # for (index,row) in enumerate(new_featues,start=0):
+                # whiter.writerow(zip(row,marc[index]))
+
+        # wireFile.close()
+
+        exit()
+
+        print(new_featues)
+
+        quantaty_fe = len(new_featues[0])
+
+        model = LinearSVC()
+        model.fit(new_featues,numpy.array([0,1,1,1,2,7,2,9,7,0,1]))
+
+        # joblib.dump(new_featues,'digits_features.pkl',compress=3)
+        # print(model.target)
+
+        print('----------- 2')
+
+        for rect in reacts:
+            cv2.rectangle(
+                self.image, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (255, 0, 0), 3)
+            leng = int(rect[3] * 1)
+            pt1 = int(rect[1] + rect[3] // 2 - leng // 2)
+            pt2 = int(rect[0] + rect[2] // 2 - leng // 2)
+            roi = thresh[pt1:pt1+leng, pt2:pt2+leng]
+
+            # if (rect[2] >= 10 and rect[2] <= 80) and (rect[3] >= 30 and rect[3] <= 90):
+
+            # print("react 3 {0}".format(rect[3]))
+
+            roi = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA)
+            # roi = cv2.dilate(roi,(-2,-2))
+
+            # print('---------------------')
+            # print(roi)
+            # print('---------------------')
+            # dilation = cv2.morphologyEx(roi,cv2.MORPH_CLOSE,rex)
+
+            # cv2.imshow('image', roi)
+            # cv2.waitKey(0)
+
+            hoi_hog_fd = hog(roi, orientations=9, pixels_per_cell=(
+                14, 14), cells_per_block=(1, 1), visualise=False)
+
+            # print('--------------------- hoh')
+            # print(hoi_hog_fd)
+            # print('--------------------- hoh')
+
+            if (rect[3] >= 50):
+                if quantaty_fe == len(hoi_hog_fd):
+                    pre = model.predict(numpy.array([hoi_hog_fd],'float64'))
+                    print(pre)
+
+        # model.fit(new_featues,numpy.array([0,0,0]))
+
+        exit()
+        print('---------- numpy append')
+        print(imagesreact)
+        print('-------------- model -------------------')
+        print(len(self.images))
+        print(self.images[0])
+        print("quantity : {0}".format(len(self.images[0])))
+
+        images = numpy.array(self.images[0],'int16')
+        print(image[0])
+        new_data = [] 
+
+        for feature in  images:
+            img = hog(feature.reshape((28,28)),orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),visualise=False)
+            new_data.append(img)
+
+        print(new_data)
+        exit()
+        # new_data_float64 = numpy.array(new_data,'float64')
+
+        print(new_data[0])
+        print('--------------- <> -----------')
+        print(new_data_float64[0])
+
+        print('-------------- model -------------------')
         self.showImage()
         # cv2.destroyAllWindows()
         exit()
@@ -539,12 +704,9 @@ if __name__ == "__main__" :
 
     # plt.show()
 
-    
-
     # print(digits)
 
-    img = ScannerDespachante(image='images/Scanner_20180822 (2).png')
-    # img.showImage()
+    img = ScannerDespachante(image='images/Scanner_20180822 (3).png')
     # img.findContours()
     # img.findContours()
     # img.black()
@@ -556,6 +718,13 @@ if __name__ == "__main__" :
     # img.threshold()
     # img.dilate()
     img.morphologyEx()
-
     # img.dilate()
-    # img.showImage()
+    img.showImage()
+    # data = pandas.read_csv("cvfile.csv",names=['data','target'])
+    # print(data[:,data.columns])
+    # df = pandas.DataFrame([1,2,32],columns=['data'])
+    # print(df)
+    # df['target'] = marc
+    
+    # df.to_csv('fileMachine.csv',index=False) 
+    
