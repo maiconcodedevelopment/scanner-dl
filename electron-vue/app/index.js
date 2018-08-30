@@ -1,7 +1,6 @@
 const {  BrowserWindow ,    app } = require('electron')
 const electron = require('electron')
 
-
 let win = null
 
 app.on('ready',() => {

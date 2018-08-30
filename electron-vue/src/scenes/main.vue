@@ -2,6 +2,7 @@
     <div id="container__scanner">
         <menubarleft></menubarleft>
         <scannerlist></scannerlist>
+        <scannerpaper></scannerpaper>
     </div>
 </template>
 
@@ -9,12 +10,14 @@
 <script>
 import menubarleft from "@/components/menu"
 import scannerlist from "@/components/scanner/scanner-list";
+import scannerpaper from "@/components/scanner/scanner-paper"
 
 export default {
     name : "main",
     components : {
         menubarleft,
-        scannerlist
+        scannerlist,
+        scannerpaper
     }
 }
 </script>

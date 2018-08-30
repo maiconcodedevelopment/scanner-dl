@@ -1,22 +1,27 @@
 <template>
     <div class="scanner__list">
        <div class="scanner__list__container">
-           <div class="scanner__list__card">
+           <div @click="scannerOn" class="scanner__list__card">
                <div class="scanner__list__card__done">
                    <font-awesome-icon icon="check" />
                </div>
                <div class="scanner__list__card__barcode">
                    <font-awesome-icon icon="barcode" />
                </div>
-               <h5>Scaneando Renavam</h5>   
+               <h5>Scaneando Renavam</h5>
            </div>
        </div>
     </div>    
 </template>
 
 <script>
+
 export default {
-    name : "scannerlist"
+    name : "scannerlist",
+    mounted(){
+    },
+    methods:{
+    }
 }
 </script>
 

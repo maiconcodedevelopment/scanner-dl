@@ -68,9 +68,9 @@ class LerningDataCSV(object):
     def pushData(self,dataframe,target):
          df = pandas.DataFrame(dataframe)
          df['target'] = target
-         print(df)
+         df.to_csv("fileMachinetest.csv",index=False)
 
-class LerningDigits(object):
+class LerningDigits(LerningDataCSV):
 
     def __init__(self):
         self.df = pandas.read_csv("fileMachine.csv")
@@ -380,19 +380,19 @@ class ScannerDespachante(LerningDigits):
         cv2.rectangle(self.image,(100,100),(3,40),(255,255,0),2)
 
     def dilate(self):
-        kernel = numpy.ones((10,10), numpy.uint8)
         dilation = None
-
         if not self.mask is None:
+            kernel = numpy.ones((5,5), numpy.uint8)
+            opening = cv2.morphologyEx(self.image,cv2.MORPH_DILATE,kernel)
+            dilation = cv2.dilate(self.mask,kernel, iterations=1)
+            self.image = dilation
+        else:
             rex = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(1,1))
             # dilation = cv2.dilate(self.mask, kernel, iterations=1)
             # opening = cv2.morphologyEx(self.mask,cv2.MORPH_GRADIENT,kernel)
             dilation = cv2.morphologyEx(rex,cv2.MORPH_ELLIPSE,rex)
             self.mask = dilation
-        else:
-            opening = cv2.morphologyEx(self.image,cv2.MORPH_DILATE,kernel)
-            dilation = cv2.dilate(self.image,kernel, iterations=1)
-            self.image = dilation
+            
 
     def black(self):
         self.image[( self.g < 120 ) & (self.r < 190) & (self.b < 190)] = [0,0,0]
@@ -410,7 +410,6 @@ class ScannerDespachante(LerningDigits):
         self.forceHSV()
         # self.mask = cv2.inRange(self.image,numpy.array(lower,dtype='uint16'),numpy.array(upper,dtype='uint16'))
         # self.dilate()
-        # self.image = self.mask
         # self.showImage()
         if mask :
             self.image = cv2.bitwise_and(self.image,self.image,mask=self.mask)
@@ -422,6 +421,14 @@ class ScannerDespachante(LerningDigits):
     def forceHSV(self):
         self.showImage()
         
+        # low = numpy.array([190,190,190])
+        # high = numpy.array([255,255,255])
+
+        # image = cv2.cvtColor(self.image,cv2.COLOR_HSV2RGB)
+
+        # image_mask = cv2.inRange(image,low,high)
+
+        
         self.blackandwrite()
         
         # self.save("imagecinza.png")
@@ -430,7 +437,7 @@ class ScannerDespachante(LerningDigits):
         
         input_image = self.image
         
-        rat , input_image = cv2.threshold(input_image,154,255,cv2.THRESH_BINARY)
+        rat , input_image = cv2.threshold(input_image,160,255,cv2.THRESH_BINARY)
         
         self.image = input_image
         
@@ -438,7 +445,7 @@ class ScannerDespachante(LerningDigits):
 
         input_image = cv2.bitwise_not(input_image)
 
-        self.image = cv2.morphologyEx(input_image,cv2.MORPH_CLOSE,numpy.ones((10,10),numpy.uint8))
+        self.image = cv2.morphologyEx(input_image,cv2.MORPH_CLOSE,numpy.ones((1,1),numpy.uint8))
 
         kernel1 = numpy.array([[0, 0, 0],
                     [0, 1, 0],
@@ -446,9 +453,6 @@ class ScannerDespachante(LerningDigits):
         kernel2 = numpy.array([[1, 1, 1],
                     [1, 0, 1],
                     [1, 1, 1]], numpy.uint8)
-
-        self.showImage()
-        exit()
 
         histormiss1 = cv2.morphologyEx(input_image,cv2.MORPH_ERODE,kernel1)
         histormiss2 = cv2.morphologyEx(input_image,cv2.MORPH_ERODE,kernel2)
@@ -532,7 +536,7 @@ class ScannerDespachante(LerningDigits):
 
         gray = cv2.cvtColor(self.image1,cv2.COLOR_BGR2GRAY)
 
-        sqKernel = cv2.getStructuringElement(cv2.MORPH_RECT,(1,1))
+        sqKernel = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
         reactKernel = cv2.getStructuringElement(cv2.MORPH_RECT,(9,3))
 
         gradX = cv2.morphologyEx(self.image,cv2.MORPH_CLOSE,sqKernel)
@@ -540,6 +544,8 @@ class ScannerDespachante(LerningDigits):
         rat ,thresh = cv2.threshold(gradX,90,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
         morplot = cv2.morphologyEx(thresh,cv2.MORPH_CLOSE,sqKernel)
+
+        self.image = morplot
 
         # self.save('teste1.png')/
 
@@ -581,15 +587,16 @@ class ScannerDespachante(LerningDigits):
             # print(hoi_hog_fd)
             # print('--------------------- hoh')
 
-            if (rect[3] >= 50):
+            print("rect 2 {0}".format(rect[2]))
+
+            if (int(rect[3]) > 60):
                 cv2.imshow('image',roi)
                 cv2.waitKey(0)
                 roi = cv2.resize(roi,(28,28),interpolation=cv2.INTER_AREA)
                 hoi_hog_fd = hog(roi,orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),visualise=False)
                 self.images.append(roi)
                 predict = self.model.predict(numpy.array([hoi_hog_fd], 'float64'))
-                print(predict)
-                cv2.putText(self.image, str(int(predict[0])), (rect[0], rect[1]),cv2.FONT_HERSHEY_DUPLEX, 2, (255, 0, 0), 3)
+                cv2.putText(self.image, str(int(predict)), (rect[0], rect[1]),cv2.FONT_HERSHEY_DUPLEX, 2, (255, 0, 0), 3)
 
             # cv2.imshow('image',roi)
             # nbr = self.clf.predict(numpy.array([hoi_hog_fd],'float64'))
@@ -597,9 +604,7 @@ class ScannerDespachante(LerningDigits):
         # cv2.imshow("machine",gray)
         # cv2.waitKey(0)
         cv2.destroyAllWindows()
-        exit()
-        # self.showImage()
-        self.image = thresh
+        self.showImage()
         # model_s = LinearSVC()
         # model_s.fit(self.images,numpy.array([0,0,6,9,4,9,3,8,1,9,0]))
         new_featues = []
@@ -610,16 +615,19 @@ class ScannerDespachante(LerningDigits):
         # print(new_featues)
         new_featues = numpy.array(new_featues,'float64')
 
-        self.pushData(new_data,numpy.array([0,1,1,1,2,7,2,9,7,0,1]))
+        self.pushData(new_featues,numpy.array([1,0,9,7,7,1,5,3,2,1,0]))
+
+        exit()
         # marc = [0,1,1,1,2,7,2,9,7,0,1]
         # df = pandas.DataFrame(new_featues)
         # df['data'] = new_featues
         # df['target'] = marc
+        # print(df)
         # self.df.append(df)
         # self.df.to_csv("fileMachine1.csv")
         # self.df = pandas.concat([self.df,df],sort=True)
         # print(self.df)
-        # df.to_csv('fileMachine1.csv',index=False)
+        # df.to_csv('fileMachine4.csv',index=False)
 
         # print("quantidade de features : {0}".format(len(new_featues)))
 
@@ -637,7 +645,7 @@ class ScannerDespachante(LerningDigits):
         quantaty_fe = len(new_featues[0])
 
         model = LinearSVC()
-        model.fit(new_featues,numpy.array([0,1,1,1,2,7,2,9,7,0,1]))
+        model.fit(new_featues,numpy.array([0,7,7,4,3,1,3,7,7,0,0]))
 
         # joblib.dump(new_featues,'digits_features.pkl',compress=3)
         # print(model.target)
@@ -744,6 +752,64 @@ class ScannerDespachante(LerningDigits):
         self.showImage()
         self.image = thresh
 
+
+    def imageFraca(self):
+        gray  = cv2.cvtColor(self.image,cv2.COLOR_BGR2GRAY)
+        ret , binary = cv2.threshold(gray,0,255,cv2.THRESH_OTSU)
+
+        binary = cv2.bitwise_not(binary)
+
+        H = cv2.Sobel(binary,cv2.CV_8U,0,2)
+        V = cv2.Sobel(binary,cv2.CV_8U,2,0)
+
+        rows , cols = self.image.shape[:2]
+
+        _ , countours , _ = cv2.findContours(V,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+
+        for cnt in countours :
+            (x,y,w,h) = cv2.boundingRect(cnt)
+
+            if h > rows/4:
+                cv2.drawContours(V,[cnt],-1,255,-1)
+                cv2.drawContours(binary,[cnt],-1,255,-1)
+            else:
+                cv2.drawContours(V,[cnt],-1,0,-1)
+
+        _ , contours , _ = cv2.findContours(H,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+
+        for cnt in contours:
+            (w,y,w,h) = cv2.boundingRect(cnt)
+
+            if w > cols / 3:
+                cv2.drawContours(H,[cnt],-1,255,-1)
+                cv2.drawContours(binary,[cnt],-1,255,-1)
+            else :
+                cv2.drawContours(H,[cnt],-1,0,-1)
+        
+        kernel = cv2.getStructuringElement(shape=cv2.MORPH_RECT,ksize=(3,3))
+        H = cv2.morphologyEx(H,cv2.MORPH_DILATE,kernel,iterations=3)
+        V = cv2.morphologyEx(V,cv2.MORPH_DILATE,kernel,iterations=3)
+
+        cv2.imshow("himage",H)
+        cv2.waitKey(0)
+
+        cv2.imshow("wimage",V)
+        cv2.waitKey(0)
+
+        self.showImage()
+        # cv2.destroyAllWindows()
+
+
+
+
+        # for cnt in contours:
+        #     (x,y,w,h) = 
+
+
+
+
+
+
 if __name__ == "__main__" :
     print('------- start machine lerning --------')
 
@@ -788,14 +854,15 @@ if __name__ == "__main__" :
 
     # print(digits)
 
-    img = ScannerDespachante(image='images/Scanner_20180827_20.png')
+    img = ScannerDespachante(image='images/Scanner_20180827_19.png')
+    img.imageFraca()
     # img.forceHSV()
     # img.findContours()
     # img.findContours()
     # img.black()
     # img.react()
-    img.inRange([0,0,0],[190,190,190],mask=False)
-    img.showImage()
+    # img.inRange([0,0,0],[150,150,150],mask=False)
+    # img.showImage()
     # img.green()
     # img.black()
     # img.blackandwrite()

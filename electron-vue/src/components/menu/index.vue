@@ -31,7 +31,7 @@ export default {
 <style lang="scss" scoped>
    .menu__bar__left{
        height: 100vh;
-       width: 80px;
+       width: 130px;
        background-color: #565655;
        display: flex;
        align-items: center;
