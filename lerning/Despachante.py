@@ -518,8 +518,7 @@ class ScannerDespachante(LerningDigits):
         tophat = cv2.morphologyEx(gray,cv2.MORPH_TOPHAT,reactKernel)
 
 
-        gradX = cv2.Sobel(tophat, ddepth=cv2.CV_32F, dx=1, dy=0,
-	    ksize=-1)
+        gradX = cv2.Sobel(tophat, ddepth=cv2.CV_32F, dx=1, dy=0,ksize=-1)
         gradX = numpy.absolute(gradX)
         (minVal, maxVal) = (numpy.min(gradX), numpy.max(gradX))
         gradX = (255 * ((gradX - minVal) / (maxVal - minVal)))
@@ -543,18 +542,28 @@ class ScannerDespachante(LerningDigits):
 
         gradX = cv2.morphologyEx(self.image,cv2.MORPH_CLOSE,sqKernel)
 
-        rat ,thresh = cv2.threshold(gradX,120,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        dilate = cv2.dilate(gradX,cv2.getStructuringElement(cv2.MORPH_OPEN,(4,4)),iterations=1)
+
+        self.image = dilate
+
+        rat ,thresh = cv2.threshold(dilate,90,255,cv2.THRESH_BINARY)
+
+        kernel1 = numpy.array([[0, 0, 0],
+                    [0, 1, 0],
+                    [0, 0, 0]], numpy.uint8)
+        kernel2 = numpy.array([[1, 1, 1],
+                    [1, 0, 1],
+                    [1, 1, 1]], numpy.uint8)
+        
 
         morplot = cv2.morphologyEx(thresh,cv2.MORPH_CLOSE,sqKernel)
-
         # self.save('teste1.png')/
-
         cnts = cv2.findContours(morplot.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 
-
-        cnts = cnts[0] if imutils.is_cv2() else cnts[1]
-        reacts = [ cv2.boundingRect(react) for react in cnts ]
+        cnts = sorted(cnts[1],key=cv2.contourArea,reverse=True)
         
+        reacts = [ cv2.boundingRect(react) for react in cnts ]
+
         # print(reacts)
         rex = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 5))
 
@@ -593,6 +602,7 @@ class ScannerDespachante(LerningDigits):
                 cv2.imshow('image',roi)
                 cv2.waitKey(0)
                 roi = cv2.resize(roi,(28,28),interpolation=cv2.INTER_AREA)
+
                 hoi_hog_fd = hog(roi,orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),visualise=False)
                 self.images.append(roi)
                 predict = self.model.predict(numpy.array([hoi_hog_fd], 'float64'))
@@ -855,14 +865,14 @@ if __name__ == "__main__" :
 
     # print(digits)
 
-    img = ScannerDespachante(image='img30/Scanner_20180830_7 (2).png')
+    img = ScannerDespachante(image='img30/Scanner_20180830_7 (4).png')
     # img.imageFraca()
     # img.forceHSV()
     # img.findContours()
     # img.findContours()
     # img.black()
     # img.react()
-    img.inRange([0,0,0],[140,140,140],mask=False)
+    img.inRange([0,0,0],[120,120,120],mask=False)
     # img.showImage()
     # img.green()
     # img.black()
