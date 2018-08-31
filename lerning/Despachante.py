@@ -407,10 +407,11 @@ class ScannerDespachante(LerningDigits):
         self.image = cv2.erode(self.image,numpy.zeros((5,5),numpy.uint8),iterations=1)
 
     def inRange(self,lower,upper,mask=False):
-        self.forceHSV()
-        # self.mask = cv2.inRange(self.image,numpy.array(lower,dtype='uint16'),numpy.array(upper,dtype='uint16'))
+        # self.forceHSV()
+        self.mask = cv2.inRange(self.image,numpy.array(lower,dtype='uint16'),numpy.array(upper,dtype='uint16'))
         # self.dilate()
         # self.showImage()
+        self.image = self.mask
         if mask :
             self.image = cv2.bitwise_and(self.image,self.image,mask=self.mask)
 
@@ -516,6 +517,7 @@ class ScannerDespachante(LerningDigits):
 
         tophat = cv2.morphologyEx(gray,cv2.MORPH_TOPHAT,reactKernel)
 
+
         gradX = cv2.Sobel(tophat, ddepth=cv2.CV_32F, dx=1, dy=0,
 	    ksize=-1)
         gradX = numpy.absolute(gradX)
@@ -541,11 +543,9 @@ class ScannerDespachante(LerningDigits):
 
         gradX = cv2.morphologyEx(self.image,cv2.MORPH_CLOSE,sqKernel)
 
-        rat ,thresh = cv2.threshold(gradX,90,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        rat ,thresh = cv2.threshold(gradX,120,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
         morplot = cv2.morphologyEx(thresh,cv2.MORPH_CLOSE,sqKernel)
-
-        self.image = morplot
 
         # self.save('teste1.png')/
 
@@ -605,6 +605,7 @@ class ScannerDespachante(LerningDigits):
         # cv2.waitKey(0)
         cv2.destroyAllWindows()
         self.showImage()
+        exit()
         # model_s = LinearSVC()
         # model_s.fit(self.images,numpy.array([0,0,6,9,4,9,3,8,1,9,0]))
         new_featues = []
@@ -854,14 +855,14 @@ if __name__ == "__main__" :
 
     # print(digits)
 
-    img = ScannerDespachante(image='images/Scanner_20180827_19.png')
-    img.imageFraca()
+    img = ScannerDespachante(image='img30/Scanner_20180830_7 (2).png')
+    # img.imageFraca()
     # img.forceHSV()
     # img.findContours()
     # img.findContours()
     # img.black()
     # img.react()
-    # img.inRange([0,0,0],[150,150,150],mask=False)
+    img.inRange([0,0,0],[140,140,140],mask=False)
     # img.showImage()
     # img.green()
     # img.black()
@@ -869,7 +870,7 @@ if __name__ == "__main__" :
     # img.showImage()
     # img.threshold()
     # img.dilate()
-    # img.morphologyEx()
+    img.morphologyEx()
     # img.dilate()
     # img.showImage()
     # data = pandas.read_csv("cvfile.csv",names=['data','target'])
