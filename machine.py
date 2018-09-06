@@ -308,3 +308,8 @@ print(X_train)
 
 #folds
 #more folds more computationally expensive
+
+#opencv_createsemples
+
+#100x100
+#50x50

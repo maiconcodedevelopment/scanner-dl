@@ -197,7 +197,7 @@ class ScannerDespachante(LerningDigits):
         self.image = cv2.imread(image)
         self.image1 = self.image
 
-        
+        self.templade_match = []        
 
         if rotate:
             rotated = imutils.rotate_bound(self.image, 27)
@@ -343,6 +343,7 @@ class ScannerDespachante(LerningDigits):
         self.hstack = None
         self.mask = None
 
+
     def blackandwrite(self):
         self.image = cv2.cvtColor(self.image,cv2.COLOR_BGR2GRAY)
 
@@ -407,11 +408,11 @@ class ScannerDespachante(LerningDigits):
         self.image = cv2.erode(self.image,numpy.zeros((5,5),numpy.uint8),iterations=1)
 
     def inRange(self,lower,upper,mask=False):
-        # self.forceHSV()
-        self.mask = cv2.inRange(self.image,numpy.array(lower,dtype='uint16'),numpy.array(upper,dtype='uint16'))
+        self.forceHSV()
+        # self.mask = cv2.inRange(self.image,numpy.array(lower,dtype='uint16'),numpy.array(upper,dtype='uint16'))
         # self.dilate()
         # self.showImage()
-        self.image = self.mask
+        # self.image = self.mask
         if mask :
             self.image = cv2.bitwise_and(self.image,self.image,mask=self.mask)
 
@@ -421,6 +422,115 @@ class ScannerDespachante(LerningDigits):
 
     def forceHSV(self):
         self.showImage()
+
+        img_rgb = self.image
+
+        img = self.image
+
+        self.blackandwrite()
+
+        input_image = self.image
+        input_image = cv2.GaussianBlur(input_image,(5,5),0)
+        rat , input_image = cv2.threshold(input_image,128,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+
+        edges = cv2.Canny(input_image,50,250,apertureSize=5,L2gradient=True)
+
+        self.image = edges
+        self.showImage()
+        
+        img = cv2.bitwise_not(input_image)
+        th2 = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY,15,-1)
+        th2 = img
+
+        horizontal = numpy.copy(th2)
+        vertical = numpy.copy(th2)
+        rows,cols = horizontal.shape
+
+        horizontalsize = int(cols / 30)
+        horizontalStructure = cv2.getStructuringElement(cv2.MORPH_RECT,(horizontalsize,1))
+        horizontal = cv2.erode(horizontal,horizontalStructure)
+        horizontal = cv2.dilate(horizontal,horizontalStructure)
+
+        cv2.imshow("horizontal",horizontal)
+
+        verticalsize = int(rows / 30)
+        verticalStructure = cv2.getStructuringElement(cv2.MORPH_RECT,(1,verticalsize))
+        vertical = cv2.erode(vertical,verticalStructure)
+        vertical = cv2.dilate(vertical,verticalStructure)
+
+        cv2.imshow("vertical",vertical)
+
+        vertical = cv2.bitwise_not(vertical)
+
+        cv2.imshow("vertical-not",vertical)
+        
+        edges = cv2.adaptiveThreshold(vertical,255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY,3,-2)
+        
+        kernel = numpy.ones((2,2),dtype="uint8")
+        dilate = cv2.dilate(edges,kernel)
+
+        cv2.imshow("dilate vertical edges",dilate)
+
+        smooth = numpy.copy(vertical)
+
+        smooth = cv2.blur(smooth,(4,4))
+        
+        cv2.imshow("edges",edges)
+
+        (rows, cols) = numpy.where(edges != 0)
+        vertical[rows, cols] = smooth[rows, cols]
+
+        cv2.imshow("vertical recebi",vertical)
+
+        linesP = cv2.HoughLinesP(img, 1, numpy.pi / 180, 50, None, 50, 10)
+        lines = cv2.HoughLines(img,1,numpy.pi / 180,200)
+
+        if lines is not None:
+            print('------------------------------------- asdf asd f-------------------------------')
+            for rho , theta in lines[0]:
+                a = numpy.cos(theta)
+                b = numpy.sin(theta)
+                x0 = a * rho
+                y0 = b * rho
+                pts1 = (int(x0 + 1000 * (-b)), int(y0 + 1000 *(a)))
+                pts2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 *(a)))
+                cv2.line(img_rgb,pts1,pts2,(255,255,255),10)
+        
+        self.image = img_rgb
+        self.image = cv2.cvtColor(self.image,cv2.COLOR_RGB2GRAY)
+        input_image = cv2.GaussianBlur(self.image,(5,5),0)
+        rat , input_image = cv2.threshold(input_image,128,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+
+        input_image = cv2.bitwise_not(input_image)
+
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(1,10))
+        closing = cv2.morphologyEx(input_image,cv2.MORPH_CLOSE,kernel)
+
+        open_img = numpy.ones((5,5),numpy.uint8)
+        open_img = cv2.morphologyEx(closing,cv2.MORPH_OPEN,open_img)
+
+        self.image = open_img
+        self.showImage()
+        exit()
+        # self.save("line_image.jpg")
+
+        if linesP is not None:
+            for i in range(0, len(linesP)):
+                l = linesP[i][0]
+                cv2.line(input_image, (l[0], l[1]), (l[2], l[3]), (255,255,0), 3, cv2.LINE_AA)
+        
+        # vertical[rows,cols] = smooth[rows,cols]
+        self.image = input_image
+        self.showImage()
+        
+        exit()
+        # kernel = numpy.ones((5,5),numpy.float32) / 25
+        # dst = cv2.filter2D(self.image,-1,kernel)
+        # self.image = dst
+
+        
+
+        imgrgb = self.image
         
         # low = numpy.array([190,190,190])
         # high = numpy.array([255,255,255])
@@ -429,40 +539,185 @@ class ScannerDespachante(LerningDigits):
 
         # image_mask = cv2.inRange(image,low,high)
 
+        gray = self.image
+
+        # (thresh,img_bin) = cv2.threshold(self.image,165,255,cv2.THRESH_BINARY)
+
+        # img = self.image
+        # img_bin = 255 - img
+
+        # verticle = numpy.array(img).shape[1]
+        # verticle1 = numpy.array(img).shape[1] // 40
+
+        # verticle_kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(10,10))
+        # hori_kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(10,10))
+        # kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(3,3))
+
+        # img_temp = cv2.erode(img_bin,verticle_kernel,iterations=3)
+        # self.image = img_temp
+        # self.showImage()
+
+        # vertible_lines_img = cv2.dilate(img_temp,verticle_kernel,iterations=3)
+
+        # self.image = vertible_lines_img
+        # self.showImage()
+
+        # print(hori_kernel)
+        # print(len(verticle_kernel))
+        # print(verticle_kernel)
+
+        # print(verticle)
+        # print(verticle1)
         
-        self.blackandwrite()
+        # exit()
+        
         
         # self.save("imagecinza.png")
 
-        self.showImage()
-        
+
         input_image = self.image
+
+        th3 = cv2.adaptiveThreshold(input_image,255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY_INV,11,1)
+        # exit()
+        input_image = cv2.GaussianBlur(input_image,(5,5),0)
+
+        rat , input_image = cv2.threshold(input_image,128,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        self.image = input_image
+        self.showImage()
+
+        exit()
+        edges = cv2.Canny(self.image,50,100,apertureSize=3)
+        minLineLength = 50
+        lines = cv2.HoughLinesP(image=edges,rho=1,theta=numpy.pi/180, threshold=100,lines=numpy.array([]), minLineLength=minLineLength,maxLineGap=500)
+
+        a,b,c = lines.shape
+        for i in range(a):
+            x = lines[i][0][0] - lines [i][0][2]
+            y = lines[i][0][1] - lines [i][0][3]
+            if x!= 0:
+                if abs(y/x) <1:
+                    cv2.line(self.image, (lines[i][0][0], lines[i][0][1]), (lines[i][0][2], lines[i][0][3]), (255, 255, 255), 1, cv2.LINE_AA)
+
+        se = cv2.getStructuringElement(cv2.MORPH_ELLIPSE , (3,3))
+        gray = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, se)
+        cv2.imwrite('houghlines.jpg', gray)
+        cv2.imshow('img', gray)
+        cv2.waitKey(0)
+
+        self.showImage()
+        exit()
         
-        rat , input_image = cv2.threshold(input_image,160,255,cv2.THRESH_BINARY)
+        # lines = cv2.HoughLines(image=edges)
         
+
+        self.showImage()
+
+        exit()
+
+        input_image = cv2.bitwise_not(input_image)
+
         self.image = input_image
         
         self.showImage()
 
-        input_image = cv2.bitwise_not(input_image)
+        exit()
 
         self.image = cv2.morphologyEx(input_image,cv2.MORPH_CLOSE,numpy.ones((1,1),numpy.uint8))
 
-        kernel1 = numpy.array([[0, 0, 0],
-                    [0, 1, 0],
-                    [0, 0, 0]], numpy.uint8)
-        kernel2 = numpy.array([[1, 1, 1],
-                    [1, 0, 1],
-                    [1, 1, 1]], numpy.uint8)
+        module1 = cv2.getStructuringElement(cv2.MORPH_CROSS,(100,5))
+        module2 = cv2.getStructuringElement(cv2.MORPH_CROSS,(5,5))
 
-        histormiss1 = cv2.morphologyEx(input_image,cv2.MORPH_ERODE,kernel1)
-        histormiss2 = cv2.morphologyEx(input_image,cv2.MORPH_ERODE,kernel2)
+        histormiss1 = cv2.morphologyEx(input_image,cv2.MORPH_ERODE,module1)
+        histormiss2 = cv2.morphologyEx(input_image,cv2.MORPH_ERODE,module2)
         histormiss3 = cv2.bitwise_and(histormiss1,histormiss2)
 
-        cv2.imshow('imagehistormiss',histormiss3)
+        image = cv2.bitwise_and(input_image,input_image,mask=histormiss3)
+
+
+        # laplacian = cv2.Laplacian(histormiss3,cv2.CV_64F)
+        # sobelx = cv2.Sobel(self.image,cv2.CV_64F,1,0,ksize=2)
+        # sobely = cv2.Sobel(self.image,cv2.CV_64F,0,1,ksize=2)
+
+        cv2.imshow("sobelx",image)
         cv2.waitKey(0)
-        cv2.destroyAllWindows()
         
+        # cv2.imshow("sobely",sobely)
+        # cv2.waitKey(0)
+        
+        cv2.destroyAllWindows()
+
+        self.image = histormiss3
+        self.showImage()
+        exit()
+
+        thresh = cv2.adaptiveThreshold(histormiss3,255,cv2.CALIB_CB_ADAPTIVE_THRESH,cv2.THRESH_BINARY_INV,5,1)
+
+        self.image = thresh
+        self.showImage()
+
+        # exit()
+
+        im2 , contours , hierarchy = cv2.findContours(histormiss3,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        
+        contours = sorted(contours,key=cv2.contourArea,reverse=True)
+
+        cvts = [cv2.boundingRect(cvt) for cvt in contours]
+
+        i = 0
+
+        template = cv2.imread('robot/number-2.jpg',0)
+        w, h = template.shape[::-1]
+
+        rest = cv2.matchTemplate(gray,template,cv2.TM_CCOEFF_NORMED)
+        thresholdte = 0.8
+        loc = numpy.where(rest >= thresholdte)
+
+        if len(self.templade_match) > 0:
+
+            for image in self.templade_match:
+
+                w , h = image.shape[::-1]
+
+                rest = cv2.matchTemplate(gray,image,cv2.TM_CCOEFF_NORMED)
+                loc = numpy.where(rest >= thresholdte)
+
+                for pt in zip(*loc[::-1]):
+                    cv2.rectangle(self.image,pt,(pt[0] + w,pt[1] + h),(255,0,0),2)
+
+                # for rect in cvts:
+
+                #      if (rect[2] >= 30 and rect[2] <= 80) and (rect[3] >= 30 and rect[3] <= 90):
+                #          leng = int(rect[3] * 1)
+                #          pt1 = int(rect[1] + rect[3] // 2 - leng // 2)
+                #          pt2 = int(rect[0] + rect[2] // 2 - leng // 2)
+                #          roi = imgrgb[pt1:pt1+leng, pt2:pt2+leng]
+
+                #          cv2.imshow("image",roi)
+                #          cv2.waitKey(0)
+                #          cv2.imwrite("number-"+str(i)+".jpg",roi)
+
+                #          i += 1
+                #          cv2.rectangle(self.image, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (255, 0, 0), 3)
+
+        # print(loc)
+        cv2.destroyAllWindows()
+        self.showImage()
+        exit()
+
+    def images_read(self,path = None,list_image=[]):
+
+        if path is None:
+            path = ""
+        else :
+            pass
+
+
+        for image in list_image:
+            image_hold = cv2.imread(str(path)+"/"+image,0)
+            self.templade_match.append(image_hold)
+
+        print(self.templade_match)
+
     def findContours(self):
         
         ret , self.image = cv2.threshold(self.image,0,255,cv2.THRESH_BINARY)
@@ -535,12 +790,16 @@ class ScannerDespachante(LerningDigits):
 
     def morphologyEx(self):
 
+        self.showImage()
+
         gray = cv2.cvtColor(self.image1,cv2.COLOR_BGR2GRAY)
 
         sqKernel = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
-        reactKernel = cv2.getStructuringElement(cv2.MORPH_RECT,(9,3))
+        reactKernel = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
 
         gradX = cv2.morphologyEx(self.image,cv2.MORPH_CLOSE,sqKernel)
+        self.image = gradX
+        self.showImage()
 
         dilate = cv2.dilate(gradX,cv2.getStructuringElement(cv2.MORPH_OPEN,(4,4)),iterations=1)
 
@@ -551,6 +810,7 @@ class ScannerDespachante(LerningDigits):
         kernel1 = numpy.array([[0, 0, 0],
                     [0, 1, 0],
                     [0, 0, 0]], numpy.uint8)
+        
         kernel2 = numpy.array([[1, 1, 1],
                     [1, 0, 1],
                     [1, 1, 1]], numpy.uint8)
@@ -558,9 +818,13 @@ class ScannerDespachante(LerningDigits):
 
         morplot = cv2.morphologyEx(thresh,cv2.MORPH_CLOSE,sqKernel)
         # self.save('teste1.png')/
-        cnts = cv2.findContours(morplot.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        im2, cnts , hierarchy = cv2.findContours(morplot.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 
-        cnts = sorted(cnts[1],key=cv2.contourArea,reverse=True)
+        cv2.drawContours(self.image,cnts,-1,(0,255,0),3)
+
+        self.showImage()
+
+        cnts = sorted(cnts,key=cv2.contourArea,reverse=True)
         
         reacts = [ cv2.boundingRect(react) for react in cnts ]
 
@@ -809,85 +1073,57 @@ class ScannerDespachante(LerningDigits):
 
         self.showImage()
         # cv2.destroyAllWindows()
-
-
-
-
         # for cnt in contours:
         #     (x,y,w,h) = 
 
 
+# lerning = LerningDigits()
+# lerning.startFeatures()
+# lerning.fitClf()
+# lerning.saveLerning()
+# video = cv2.VideoCapture(0)
+# while (True):
+#     (grabbed , frame) = video.read()
+#     horl = FrameCamera(rat=grabbed,frame=frame)
+#     horl.inRange([0,0,0],[100,100,100],mask=True)
+#     horl.cameraShow()
+#     if cv2.waitKey(1) == 27:
+#         break
+# video.release()
+# cv2.destroyAllWindows()
+# digits = datasets.load_digits()
+# im = numpy.zeros((128,128))
+# im[32:-32,32:-32] = 1
+# edges = feature.canny(im)
+# fig , (x1,x2,x3) = plt.subplots(nrows=1,ncols=3,figsize=(8,2),sharex=True,sharey=True)
+# x2.imshow(edges,cmap=plt.cm.gray)
+# x2.axis('off')
+# x2.set_title('canny',fontsize=20)
+# fig.tight_layout()
+# plt.show()
+# print(digits)
+# img = ScannerDespachante(image='images/Scanner_20180820 (5)-1.png')
+# img.imageFraca()
+# img.forceHSV()
+# img.findContours()
+# img.findContours()
+# img.black()
+# img.react()
+# img.inRange([0,0,0],[140,140,140],mask=False)
+# img.showImage()
+# img.green()
+# img.black()
+# img.blackandwrite()
+# img.showImage()
+# img.threshold()
+# img.dilate()
+# img.morphologyEx()
+# img.dilate()
+# img.showImage()
+# data = pandas.read_csv("cvfile.csv",names=['data','target'])
+# print(data[:,data.columns])
+# df = pandas.DataFrame([1,2,32],columns=['data'])
+# print(df)
+# df['target'] = marc
 
-
-
-
-if __name__ == "__main__" :
-    print('------- start machine lerning --------')
-
-    # lerning = LerningDigits()
-    # lerning.startFeatures()
-    # lerning.fitClf()
-    # lerning.saveLerning()
-
-    # video = cv2.VideoCapture(0)
-
-    # while (True):
-    #     (grabbed , frame) = video.read()
-
-    #     horl = FrameCamera(rat=grabbed,frame=frame)
-    #     horl.inRange([0,0,0],[100,100,100],mask=True)
-    #     horl.cameraShow()
-
-    #     if cv2.waitKey(1) == 27:
-    #         break
-
-    # video.release()
-    # cv2.destroyAllWindows()
-
-    # digits = datasets.load_digits()
-
-    # im = numpy.zeros((128,128))
-
-    # im[32:-32,32:-32] = 1
-
-    # edges = feature.canny(im)
-
-
-    # fig , (x1,x2,x3) = plt.subplots(nrows=1,ncols=3,figsize=(8,2),sharex=True,sharey=True)
-
-    # x2.imshow(edges,cmap=plt.cm.gray)
-    # x2.axis('off')
-    # x2.set_title('canny',fontsize=20)
-
-    # fig.tight_layout()
-
-    # plt.show()
-
-    # print(digits)
-
-    img = ScannerDespachante(image='img30/Scanner_20180830_7 (4).png')
-    # img.imageFraca()
-    # img.forceHSV()
-    # img.findContours()
-    # img.findContours()
-    # img.black()
-    # img.react()
-    img.inRange([0,0,0],[120,120,120],mask=False)
-    # img.showImage()
-    # img.green()
-    # img.black()
-    # img.blackandwrite()
-    # img.showImage()
-    # img.threshold()
-    # img.dilate()
-    img.morphologyEx()
-    # img.dilate()
-    # img.showImage()
-    # data = pandas.read_csv("cvfile.csv",names=['data','target'])
-    # print(data[:,data.columns])
-    # df = pandas.DataFrame([1,2,32],columns=['data'])
-    # print(df)
-    # df['target'] = marc
-    
-    # df.to_csv('fileMachine.csv',index=False) 
-    
+# df.to_csv('fileMachine.csv',index=False)
