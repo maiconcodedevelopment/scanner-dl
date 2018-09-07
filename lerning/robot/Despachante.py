@@ -91,20 +91,18 @@ class LerningDigits(LerningDataCSV):
         self.v_8 = target[target == 8]
         self.v_9 = target[target == 9]
 
-        # print(target[target == 0])
-        # print(target[target == 1]) 
-        # print(target[target == 2])
-        # print(target[target == 3])
-        # print(target[target == 4])
-        # print(target[target == 5])
-        # print(target[target == 6])
-        # print(target[target == 7])
-        # print(target[target == 8])
-        # print(target[target == 9])
+        print(target[target == 0])
+        print(target[target == 1]) 
+        print(target[target == 2])
+        print(target[target == 3])
+        print(target[target == 4])
+        print(target[target == 5])
+        print(target[target == 6])
+        print(target[target == 7])
+        print(target[target == 8])
+        print(target[target == 9])
 
         self.model.fit(data,target)
-
-        print(target)
 
         # print(target)
         
@@ -217,8 +215,6 @@ class ScannerDespachante(LerningDigits):
         # self.showImage()
         # invert = cv2.flip(self.image,1)
         # self.image = invert
-        self.showImage()
-
         we , h = (self.image.shape[1] , self.image.shape[0])
 
         self.rex = cv2.getStructuringElement(cv2.MORPH_RECT,(40,40))
@@ -316,7 +312,6 @@ class ScannerDespachante(LerningDigits):
         # print(rex)
         # print(longs)
         # self.image = self.image
-        self.showImage()
         # print(self.image.shape)
 
         #calc record
@@ -420,7 +415,31 @@ class ScannerDespachante(LerningDigits):
     def threshold(self):
         ret , self.image = cv2.threshold(self.image,120,255,cv2.THRESH_BINARY_INV)
 
+    def dilateImage(self,value=(1,1),iterations=1):
+        dilate = numpy.ones(value,numpy.uint8)
+        self.image = cv2.dilate(self.image,dilate,iterations=iterations)
+
+    def erodeImage(self,value=(1,1),iterations=1):
+        erode = numpy.ones(value,numpy.uint8)
+        self.image = cv2.erode(self.image,erode,iterations=iterations)
+
+    def removeLineNumpy(self):
+        kernel_clear = numpy.ones((2,2),numpy.uint8)
+        clened = cv2.erode(self.image,kernel_clear,iterations=1)
+
+        kernel_line = numpy.ones((1,5),numpy.uint8)
+        clean_lines = cv2.erode(clened,kernel_line,iterations=6)
+        clean_lines = cv2.dilate(clean_lines,kernel_line,iterations=6)
+
+        cleaded_img_without_lines = clened - clean_lines
+        cleaded_img_without_lines = cv2.bitwise_not(cleaded_img_without_lines)
+
+        self.image = cleaded_img_without_lines
+        self.showImage()
+
+
     def forceHSV(self):
+        
         self.showImage()
 
         img_rgb = self.image
@@ -434,16 +453,14 @@ class ScannerDespachante(LerningDigits):
         rat , input_image = cv2.threshold(input_image,128,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
         edges = cv2.Canny(input_image,50,250,apertureSize=5,L2gradient=True)
-
-        self.image = edges
-        self.showImage()
         
         img = cv2.bitwise_not(input_image)
         th2 = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY,15,-1)
+        img_th2 = th2
         th2 = img
 
-        horizontal = numpy.copy(th2)
-        vertical = numpy.copy(th2)
+        horizontal = numpy.copy(img_th2)
+        vertical = numpy.copy(img_th2)
         rows,cols = horizontal.shape
 
         horizontalsize = int(cols / 30)
@@ -451,42 +468,30 @@ class ScannerDespachante(LerningDigits):
         horizontal = cv2.erode(horizontal,horizontalStructure)
         horizontal = cv2.dilate(horizontal,horizontalStructure)
 
-        cv2.imshow("horizontal",horizontal)
 
         verticalsize = int(rows / 30)
         verticalStructure = cv2.getStructuringElement(cv2.MORPH_RECT,(1,verticalsize))
         vertical = cv2.erode(vertical,verticalStructure)
         vertical = cv2.dilate(vertical,verticalStructure)
 
-        cv2.imshow("vertical",vertical)
-
         vertical = cv2.bitwise_not(vertical)
 
-        cv2.imshow("vertical-not",vertical)
-        
         edges = cv2.adaptiveThreshold(vertical,255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY,3,-2)
         
         kernel = numpy.ones((2,2),dtype="uint8")
         dilate = cv2.dilate(edges,kernel)
 
-        cv2.imshow("dilate vertical edges",dilate)
-
         smooth = numpy.copy(vertical)
 
         smooth = cv2.blur(smooth,(4,4))
         
-        cv2.imshow("edges",edges)
-
-        (rows, cols) = numpy.where(edges != 0)
+        (rows, cols) = numpy.where(img == 0)
         vertical[rows, cols] = smooth[rows, cols]
 
-        cv2.imshow("vertical recebi",vertical)
-
-        linesP = cv2.HoughLinesP(img, 1, numpy.pi / 180, 50, None, 50, 10)
-        lines = cv2.HoughLines(img,1,numpy.pi / 180,200)
+        linesP = cv2.HoughLinesP(img_th2, 1, numpy.pi / 180, 50, None, 50, 10)
+        lines = cv2.HoughLines(img_th2,1,numpy.pi / 180,200)
 
         if lines is not None:
-            print('------------------------------------- asdf asd f-------------------------------')
             for rho , theta in lines[0]:
                 a = numpy.cos(theta)
                 b = numpy.sin(theta)
@@ -494,215 +499,26 @@ class ScannerDespachante(LerningDigits):
                 y0 = b * rho
                 pts1 = (int(x0 + 1000 * (-b)), int(y0 + 1000 *(a)))
                 pts2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 *(a)))
-                cv2.line(img_rgb,pts1,pts2,(255,255,255),10)
+                cv2.line(img_rgb,pts1,pts2,(255,255,255),8)
         
         self.image = img_rgb
-        self.image = cv2.cvtColor(self.image,cv2.COLOR_RGB2GRAY)
+        self.blackandwrite()
+
         input_image = cv2.GaussianBlur(self.image,(5,5),0)
         rat , input_image = cv2.threshold(input_image,128,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-
-        input_image = cv2.bitwise_not(input_image)
-
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(1,10))
-        closing = cv2.morphologyEx(input_image,cv2.MORPH_CLOSE,kernel)
-
-        open_img = numpy.ones((5,5),numpy.uint8)
-        open_img = cv2.morphologyEx(closing,cv2.MORPH_OPEN,open_img)
-
-        self.image = open_img
-        self.showImage()
-        exit()
-        # self.save("line_image.jpg")
-
-        if linesP is not None:
-            for i in range(0, len(linesP)):
-                l = linesP[i][0]
-                cv2.line(input_image, (l[0], l[1]), (l[2], l[3]), (255,255,0), 3, cv2.LINE_AA)
-        
-        # vertical[rows,cols] = smooth[rows,cols]
-        self.image = input_image
-        self.showImage()
-        
-        exit()
-        # kernel = numpy.ones((5,5),numpy.float32) / 25
-        # dst = cv2.filter2D(self.image,-1,kernel)
-        # self.image = dst
-
-        
-
-        imgrgb = self.image
-        
-        # low = numpy.array([190,190,190])
-        # high = numpy.array([255,255,255])
-
-        # image = cv2.cvtColor(self.image,cv2.COLOR_HSV2RGB)
-
-        # image_mask = cv2.inRange(image,low,high)
-
-        gray = self.image
-
-        # (thresh,img_bin) = cv2.threshold(self.image,165,255,cv2.THRESH_BINARY)
-
-        # img = self.image
-        # img_bin = 255 - img
-
-        # verticle = numpy.array(img).shape[1]
-        # verticle1 = numpy.array(img).shape[1] // 40
-
-        # verticle_kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(10,10))
-        # hori_kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(10,10))
-        # kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(3,3))
-
-        # img_temp = cv2.erode(img_bin,verticle_kernel,iterations=3)
-        # self.image = img_temp
-        # self.showImage()
-
-        # vertible_lines_img = cv2.dilate(img_temp,verticle_kernel,iterations=3)
-
-        # self.image = vertible_lines_img
-        # self.showImage()
-
-        # print(hori_kernel)
-        # print(len(verticle_kernel))
-        # print(verticle_kernel)
-
-        # print(verticle)
-        # print(verticle1)
-        
-        # exit()
-        
-        
-        # self.save("imagecinza.png")
-
-
-        input_image = self.image
-
-        th3 = cv2.adaptiveThreshold(input_image,255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY_INV,11,1)
-        # exit()
-        input_image = cv2.GaussianBlur(input_image,(5,5),0)
-
-        rat , input_image = cv2.threshold(input_image,128,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-        self.image = input_image
-        self.showImage()
-
-        exit()
-        edges = cv2.Canny(self.image,50,100,apertureSize=3)
-        minLineLength = 50
-        lines = cv2.HoughLinesP(image=edges,rho=1,theta=numpy.pi/180, threshold=100,lines=numpy.array([]), minLineLength=minLineLength,maxLineGap=500)
-
-        a,b,c = lines.shape
-        for i in range(a):
-            x = lines[i][0][0] - lines [i][0][2]
-            y = lines[i][0][1] - lines [i][0][3]
-            if x!= 0:
-                if abs(y/x) <1:
-                    cv2.line(self.image, (lines[i][0][0], lines[i][0][1]), (lines[i][0][2], lines[i][0][3]), (255, 255, 255), 1, cv2.LINE_AA)
-
-        se = cv2.getStructuringElement(cv2.MORPH_ELLIPSE , (3,3))
-        gray = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, se)
-        cv2.imwrite('houghlines.jpg', gray)
-        cv2.imshow('img', gray)
-        cv2.waitKey(0)
-
-        self.showImage()
-        exit()
-        
-        # lines = cv2.HoughLines(image=edges)
-        
-
-        self.showImage()
-
-        exit()
-
         input_image = cv2.bitwise_not(input_image)
 
         self.image = input_image
-        
+
+        edges_kernel = numpy.ones((5,5),dtype="float64")
+        get_struct = cv2.getStructuringElement(cv2.MORPH_RECT,(8,5))
+        self.image = cv2.morphologyEx(self.image,cv2.MORPH_OPEN,get_struct)
+
         self.showImage()
 
-        exit()
+        self.dilateImage(value=(3,3),iterations=1)
 
-        self.image = cv2.morphologyEx(input_image,cv2.MORPH_CLOSE,numpy.ones((1,1),numpy.uint8))
-
-        module1 = cv2.getStructuringElement(cv2.MORPH_CROSS,(100,5))
-        module2 = cv2.getStructuringElement(cv2.MORPH_CROSS,(5,5))
-
-        histormiss1 = cv2.morphologyEx(input_image,cv2.MORPH_ERODE,module1)
-        histormiss2 = cv2.morphologyEx(input_image,cv2.MORPH_ERODE,module2)
-        histormiss3 = cv2.bitwise_and(histormiss1,histormiss2)
-
-        image = cv2.bitwise_and(input_image,input_image,mask=histormiss3)
-
-
-        # laplacian = cv2.Laplacian(histormiss3,cv2.CV_64F)
-        # sobelx = cv2.Sobel(self.image,cv2.CV_64F,1,0,ksize=2)
-        # sobely = cv2.Sobel(self.image,cv2.CV_64F,0,1,ksize=2)
-
-        cv2.imshow("sobelx",image)
-        cv2.waitKey(0)
-        
-        # cv2.imshow("sobely",sobely)
-        # cv2.waitKey(0)
-        
-        cv2.destroyAllWindows()
-
-        self.image = histormiss3
         self.showImage()
-        exit()
-
-        thresh = cv2.adaptiveThreshold(histormiss3,255,cv2.CALIB_CB_ADAPTIVE_THRESH,cv2.THRESH_BINARY_INV,5,1)
-
-        self.image = thresh
-        self.showImage()
-
-        # exit()
-
-        im2 , contours , hierarchy = cv2.findContours(histormiss3,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-        
-        contours = sorted(contours,key=cv2.contourArea,reverse=True)
-
-        cvts = [cv2.boundingRect(cvt) for cvt in contours]
-
-        i = 0
-
-        template = cv2.imread('robot/number-2.jpg',0)
-        w, h = template.shape[::-1]
-
-        rest = cv2.matchTemplate(gray,template,cv2.TM_CCOEFF_NORMED)
-        thresholdte = 0.8
-        loc = numpy.where(rest >= thresholdte)
-
-        if len(self.templade_match) > 0:
-
-            for image in self.templade_match:
-
-                w , h = image.shape[::-1]
-
-                rest = cv2.matchTemplate(gray,image,cv2.TM_CCOEFF_NORMED)
-                loc = numpy.where(rest >= thresholdte)
-
-                for pt in zip(*loc[::-1]):
-                    cv2.rectangle(self.image,pt,(pt[0] + w,pt[1] + h),(255,0,0),2)
-
-                # for rect in cvts:
-
-                #      if (rect[2] >= 30 and rect[2] <= 80) and (rect[3] >= 30 and rect[3] <= 90):
-                #          leng = int(rect[3] * 1)
-                #          pt1 = int(rect[1] + rect[3] // 2 - leng // 2)
-                #          pt2 = int(rect[0] + rect[2] // 2 - leng // 2)
-                #          roi = imgrgb[pt1:pt1+leng, pt2:pt2+leng]
-
-                #          cv2.imshow("image",roi)
-                #          cv2.waitKey(0)
-                #          cv2.imwrite("number-"+str(i)+".jpg",roi)
-
-                #          i += 1
-                #          cv2.rectangle(self.image, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (255, 0, 0), 3)
-
-        # print(loc)
-        cv2.destroyAllWindows()
-        self.showImage()
-        exit()
 
     def images_read(self,path = None,list_image=[]):
 
@@ -790,79 +606,83 @@ class ScannerDespachante(LerningDigits):
 
     def morphologyEx(self):
 
-        self.showImage()
+        # self.showImage()
 
-        gray = cv2.cvtColor(self.image1,cv2.COLOR_BGR2GRAY)
+        # gray = cv2.cvtColor(self.image1,cv2.COLOR_BGR2GRAY)
 
-        sqKernel = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
-        reactKernel = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
+        # sqKernel = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
+        # reactKernel = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
 
-        gradX = cv2.morphologyEx(self.image,cv2.MORPH_CLOSE,sqKernel)
-        self.image = gradX
-        self.showImage()
+        # gradX = cv2.morphologyEx(self.image,cv2.MORPH_CLOSE,sqKernel)
+        # self.image = gradX
+        # self.showImage()
 
-        dilate = cv2.dilate(gradX,cv2.getStructuringElement(cv2.MORPH_OPEN,(4,4)),iterations=1)
+        # dilate = cv2.dilate(gradX,cv2.getStructuringElement(cv2.MORPH_OPEN,(4,4)),iterations=1)
 
-        self.image = dilate
+        # self.image = dilate
 
-        rat ,thresh = cv2.threshold(dilate,90,255,cv2.THRESH_BINARY)
+        # rat ,thresh = cv2.threshold(dilate,90,255,cv2.THRESH_BINARY)
 
-        kernel1 = numpy.array([[0, 0, 0],
-                    [0, 1, 0],
-                    [0, 0, 0]], numpy.uint8)
+        # kernel1 = numpy.array([[0, 0, 0],
+        #             [0, 1, 0],
+        #             [0, 0, 0]], numpy.uint8)
         
-        kernel2 = numpy.array([[1, 1, 1],
-                    [1, 0, 1],
-                    [1, 1, 1]], numpy.uint8)
-        
+        # kernel2 = numpy.array([[1, 1, 1],
+        #             [1, 0, 1],
+        #             [1, 1, 1]], numpy.uint8)
 
-        morplot = cv2.morphologyEx(thresh,cv2.MORPH_CLOSE,sqKernel)
+        # morplot = cv2.morphologyEx(thresh,cv2.MORPH_CLOSE,sqKernel)
         # self.save('teste1.png')/
-        im2, cnts , hierarchy = cv2.findContours(morplot.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        im2, cnts , hierarchy = cv2.findContours(self.image.copy(),cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 
-        cv2.drawContours(self.image,cnts,-1,(0,255,0),3)
+        myContours = []
 
-        self.showImage()
+
+        for cnt in reversed(cnts):
+
+            epsilon = 0.1*cv2.arcLength(cnt,True)
+            approx = cv2.approxPolyDP(cnt,epsilon,True)
+
+            if len(approx == 4):
+
+                rectangle = cv2.boundingRect(cnt)
+                myContours.append(rectangle)
+
+
+        max_width = max(myContours,key=lambda r:r[0] + r[2])[0]
+        max_height = min(myContours,key=lambda r:r[3])[3]
+        nearest = max_height * 1.4
+        myContours.sort(key=lambda r: r[1] + r[0])
+
+        # cv2.drawContours(self.image,cnts,-1,(255,255,255),3)
+
+        sorted_ctrs = sorted(cnts,key=lambda ctr: cv2.boundingRect(ctr))
 
         cnts = sorted(cnts,key=cv2.contourArea,reverse=True)
-        
-        reacts = [ cv2.boundingRect(react) for react in cnts ]
+
+        reacts = [ cv2.boundingRect(react) for react in cnts]
+
+        # (cnts,boudingBoxes) = zip(*sorted(zip(cnts,reacts),key=lambda b:b[1][0],reverse=False))
 
         # print(reacts)
-        rex = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 5))
-
+        # rex = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 5))
         imagesreact = numpy.array([])
         predicts = []
+        
+        for rect in myContours:
 
-        train = KNeighborsClassifier(n_neighbors=2)
+            if (rect[2] >= 30 and rect[2] <= 70) and (rect[3] >= 50 and rect[3] <= 80):
 
-        #bunch
-        for rect in reacts:
-            cv2.rectangle(self.image, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (255, 0, 0), 3) 
-            leng = int(rect[3] * 1)
-            pt1 = int(rect[1] + rect[3] // 2 - leng // 2)
-            pt2 = int(rect[0] + rect[2] // 2 - leng // 2)
-            roi = thresh[pt1:pt1+leng, pt2:pt2+leng]
+                print("eixo 2 : {0}".format(rect[2]))
+                print("eixo 3 : {0}".format(rect[3]))
 
-            # if (rect[2] >= 10 and rect[2] <= 80) and (rect[3] >= 30 and rect[3] <= 90):
-            
-            # print("react 3 {0}".format(rect[3]))
+                cv2.rectangle(self.image, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (255, 0, 0), 3)
 
-            
-            # roi = cv2.dilate(roi,(-2,-2))
+                leng = int(rect[3] * 1)
+                pt1 = int(rect[1] + rect[3] // 2 - leng // 2)
+                pt2 = int(rect[0] + rect[2] // 2 - leng // 2)
+                roi = self.image[pt1:pt1+leng, pt2:pt2+leng]
 
-            # print('---------------------')
-            # print(roi)
-            # print('---------------------')
-            # dilation = cv2.morphologyEx(roi,cv2.MORPH_CLOSE,rex)
-
-            # print('--------------------- hoh')
-            # print(hoi_hog_fd)
-            # print('--------------------- hoh')
-
-            print("rect 2 {0}".format(rect[2]))
-
-            if (int(rect[3]) > 60):
                 cv2.imshow('image',roi)
                 cv2.waitKey(0)
                 roi = cv2.resize(roi,(28,28),interpolation=cv2.INTER_AREA)
@@ -878,8 +698,7 @@ class ScannerDespachante(LerningDigits):
         # cv2.imshow("machine",gray)
         # cv2.waitKey(0)
         cv2.destroyAllWindows()
-        self.showImage()
-        exit()
+        # exit()
         # model_s = LinearSVC()
         # model_s.fit(self.images,numpy.array([0,0,6,9,4,9,3,8,1,9,0]))
         new_featues = []
@@ -887,12 +706,16 @@ class ScannerDespachante(LerningDigits):
             img = hog(feature.reshape((28,28)),orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),visualise=False)
             new_featues.append(img)
 
+        
         # print(new_featues)
         new_featues = numpy.array(new_featues,'float64')
 
-        self.pushData(new_featues,numpy.array([1,0,9,7,7,1,5,3,2,1,0]))
+        print(self.model.predict(new_featues))
+        self.showImage()
 
-        exit()
+        self.pushData(new_featues,numpy.array([0,0,4,9,7,6,1,7,4,8,9]))
+
+        
         # marc = [0,1,1,1,2,7,2,9,7,0,1]
         # df = pandas.DataFrame(new_featues)
         # df['data'] = new_featues
@@ -913,119 +736,119 @@ class ScannerDespachante(LerningDigits):
 
         # wireFile.close()
 
-        exit()
-
-        print(new_featues)
-
-        quantaty_fe = len(new_featues[0])
-
-        model = LinearSVC()
-        model.fit(new_featues,numpy.array([0,7,7,4,3,1,3,7,7,0,0]))
-
-        # joblib.dump(new_featues,'digits_features.pkl',compress=3)
-        # print(model.target)
-
-        print('----------- 2')
-
-        for rect in reacts:
-            cv2.rectangle(self.image, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (255, 0, 0), 3)
-            leng = int(rect[3] * 1)
-            pt1 = int(rect[1] + rect[3] // 2 - leng // 2)
-            pt2 = int(rect[0] + rect[2] // 2 - leng // 2)
-            roi = thresh[pt1:pt1+leng, pt2:pt2+leng]
-
-            # if (rect[2] >= 10 and rect[2] <= 80) and (rect[3] >= 30 and rect[3] <= 90):
-
-            # print("react 3 {0}".format(rect[3]))
-
-            cv2.imshow('image',roi)
-            cv2.waitKey(0)
-            # print('--------------------- hoh')
-            # print(hoi_hog_fd)
-            # print('--------------------- hoh')
-
-            # if (rect[3] >= 50):
-                # roi = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA)
-                # roi = cv2.dilate(roi,(-2,-2))
-                # print('---------------------')
-                # print(roi)
-                # print('---------------------')
-                # dilation = cv2.morphologyEx(roi,cv2.MORPH_CLOSE,rex)
-                # cv2.imshow('image', roi)
-                # cv2.waitKey(0)
-                # hoi_hog_fd = hog(roi, orientations=9, pixels_per_cell=(14, 14), cells_per_block=(1, 1), visualise=False)
-
-                # if quantaty_fe == len(hoi_hog_fd):
-                #     pre = model.predict(numpy.array([hoi_hog_fd],'float64'))
-                #     print(pre)
-
-        # model.fit(new_featues,numpy.array([0,0,0]))
-        cv2.destroyAllWindows()
-        exit()
-        print('---------- numpy append')
-        print(imagesreact)
-        print('-------------- model -------------------')
-        print(len(self.images))
-        print(self.images[0])
-        print("quantity : {0}".format(len(self.images[0])))
-
-        images = numpy.array(self.images[0],'int16')
-        print(image[0])
-        new_data = [] 
-
-        for feature in  images:
-            img = hog(feature.reshape((28,28)),orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),visualise=False)
-            new_data.append(img)
-
-        print(new_data)
-        exit()
-        # new_data_float64 = numpy.array(new_data,'float64')
-
-        print(new_data[0])
-        print('--------------- <> -----------')
-        print(new_data_float64[0])
-
-        print('-------------- model -------------------')
-        self.showImage()
-        # cv2.destroyAllWindows()
-        exit()
-
-        locs = []
-
-        for (i ,c )in enumerate(cnts):
-
-            (x,y,w,h) = cv2.boundingRect(c)
-            ar = w / float(h)
-
-            print("{0} {1}".format(w,h))
-            if ( w >= 10 and w <= 80) and (h >= 30 and h <= 90):
-                locs.append((x,y,w,h))
-
-
-        # print(locs)
         # exit()
-        locs = sorted(locs,key=lambda x:x[0])
-        output = []
 
-        for (i ,(x,y,w,h)) in enumerate(locs):
-            groupOutput = []
+        # print(new_featues)
 
-            group = gray[y:y + h,x:x + w]
-            cv2.imshow("images",group)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
-            # group = cv2.threshold(group,0,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+        # quantaty_fe = len(new_featues[0])
 
-            # digitCnts = cv2.findContours(group,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-            # digitCnts = digitCnts[0] if imutils.is_cv2() else digitCnts[1]
-            # digitCnts = contours.sort_contours(digitCnts,method="left-to-right")[0]
+        # model = LinearSVC()
+        # model.fit(new_featues,numpy.array([0,7,7,4,3,1,3,7,7,0,0]))
 
-            # for c in digitCnts:
-            #     print(c)
+        # # joblib.dump(new_featues,'digits_features.pkl',compress=3)
+        # # print(model.target)
+
+        # print('----------- 2')
+
+        # for rect in reacts:
+        #     cv2.rectangle(self.image, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (255, 0, 0), 3)
+        #     leng = int(rect[3] * 1)
+        #     pt1 = int(rect[1] + rect[3] // 2 - leng // 2)
+        #     pt2 = int(rect[0] + rect[2] // 2 - leng // 2)
+        #     roi = thresh[pt1:pt1+leng, pt2:pt2+leng]
+
+        #     # if (rect[2] >= 10 and rect[2] <= 80) and (rect[3] >= 30 and rect[3] <= 90):
+
+        #     # print("react 3 {0}".format(rect[3]))
+
+        #     cv2.imshow('image',roi)
+        #     cv2.waitKey(0)
+        #     # print('--------------------- hoh')
+        #     # print(hoi_hog_fd)
+        #     # print('--------------------- hoh')
+
+        #     # if (rect[3] >= 50):
+        #         # roi = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA)
+        #         # roi = cv2.dilate(roi,(-2,-2))
+        #         # print('---------------------')
+        #         # print(roi)
+        #         # print('---------------------')
+        #         # dilation = cv2.morphologyEx(roi,cv2.MORPH_CLOSE,rex)
+        #         # cv2.imshow('image', roi)
+        #         # cv2.waitKey(0)
+        #         # hoi_hog_fd = hog(roi, orientations=9, pixels_per_cell=(14, 14), cells_per_block=(1, 1), visualise=False)
+
+        #         # if quantaty_fe == len(hoi_hog_fd):
+        #         #     pre = model.predict(numpy.array([hoi_hog_fd],'float64'))
+        #         #     print(pre)
+
+        # # model.fit(new_featues,numpy.array([0,0,0]))
+        # cv2.destroyAllWindows()
+        # exit()
+        # print('---------- numpy append')
+        # print(imagesreact)
+        # print('-------------- model -------------------')
+        # print(len(self.images))
+        # print(self.images[0])
+        # print("quantity : {0}".format(len(self.images[0])))
+
+        # images = numpy.array(self.images[0],'int16')
+        # print(image[0])
+        # new_data = [] 
+
+        # for feature in  images:
+        #     img = hog(feature.reshape((28,28)),orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),visualise=False)
+        #     new_data.append(img)
+
+        # print(new_data)
+        # exit()
+        # # new_data_float64 = numpy.array(new_data,'float64')
+
+        # print(new_data[0])
+        # print('--------------- <> -----------')
+        # print(new_data_float64[0])
+
+        # print('-------------- model -------------------')
+        # self.showImage()
+        # # cv2.destroyAllWindows()
+        # exit()
+
+        # locs = []
+
+        # for (i ,c )in enumerate(cnts):
+
+        #     (x,y,w,h) = cv2.boundingRect(c)
+        #     ar = w / float(h)
+
+        #     print("{0} {1}".format(w,h))
+        #     if ( w >= 10 and w <= 80) and (h >= 30 and h <= 90):
+        #         locs.append((x,y,w,h))
+
+
+        # # print(locs)
+        # # exit()
+        # locs = sorted(locs,key=lambda x:x[0])
+        # output = []
+
+        # for (i ,(x,y,w,h)) in enumerate(locs):
+        #     groupOutput = []
+
+        #     group = gray[y:y + h,x:x + w]
+        #     cv2.imshow("images",group)
+        #     cv2.waitKey(0)
+        #     cv2.destroyAllWindows()
+        #     # group = cv2.threshold(group,0,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+
+        #     # digitCnts = cv2.findContours(group,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        #     # digitCnts = digitCnts[0] if imutils.is_cv2() else digitCnts[1]
+        #     # digitCnts = contours.sort_contours(digitCnts,method="left-to-right")[0]
+
+        #     # for c in digitCnts:
+        #     #     print(c)
 
         
-        self.showImage()
-        self.image = thresh
+        # self.showImage()
+        # self.image = thresh
 
 
     def imageFraca(self):
