@@ -9,7 +9,8 @@ from robot.Despachante import ScannerDespachante , LerningDigits
 # scanner.morphologyEx()
 # scanner.showImage()
 
-scanner1 = ScannerDespachante("images/Scanner_20180827_20.png")
+scanner1 = ScannerDespachante("images/Scanner_20180820_2.png")
+scanner1.showImage()
 scanner1.forceHSV()
 scanner1.morphologyEx()
 # scanner1.inRange([0,0,0],[120,120,120],mask=True)
@@ -19,3 +20,6 @@ scanner1.morphologyEx()
 # scanner1 = ScannerDespachante("images/Scanner_20180820 (5)-1.png")
 # scanner1.forceHSV()
 # scanner1.morphologyEx()
+
+
+# lerning = LerningDigits()

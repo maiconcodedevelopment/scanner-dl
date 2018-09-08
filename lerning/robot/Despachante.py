@@ -32,6 +32,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import fetch_mldata
 from sklearn.externals import joblib
+from sklearn.cross_validation import cross_val_score
+from sklearn.multiclass import OneVsRestClassifier , OneVsOneClassifier
+
 #scipy
 from scipy import ndimage as ndi
 
@@ -60,6 +63,33 @@ class FrameCamera(object):
         cv2.imshow('frame',self.frame)
 
 
+class CrossMachine(object):
+    
+    def __init__(self,k=1):
+        self.cv = k
+        self.model_cross = OneVsRestClassifier(LinearSVC(random_state=0))
+        self.model_one = OneVsOneClassifier(LinearSVC(random_state=0))
+
+    def fit_and_predict_rest(self,data_t,target_t):
+        scores = cross_val_score(self.model_cross,data_t,target_t,cv=self.cv)
+        mean =  numpy.mean(scores)
+        print("scores rest ----")
+        print(scores)
+        print("scores rest ----")
+
+        print("taxa de acerto rest : {0}".format(mean))
+
+    def fit_and_predict_one(self,data_t,target_t):
+        scores = cross_val_score(self.model_one,data_t,target_t,cv=self.cv)
+        mean = numpy.mean(scores)
+
+        print("scores one ---")
+        print(scores)
+        print("scores one ---")
+
+        print("taxa de acerto one : {0}".format(mean))
+
+
 class LerningDataCSV(object):
 
     def __init__(self):
@@ -73,8 +103,10 @@ class LerningDataCSV(object):
 class LerningDigits(LerningDataCSV):
 
     def __init__(self):
+
         self.df = pandas.read_csv("fileMachine.csv")
         self.model = LinearSVC()
+        self.model_cross = CrossMachine(10)
 
         data = self.df[self.df.columns[0:36]]
         data = data.values
@@ -102,7 +134,11 @@ class LerningDigits(LerningDataCSV):
         print(target[target == 8])
         print(target[target == 9])
 
+        self.model_cross.fit_and_predict_rest(data_t=data,target_t=target)
+        self.model_cross.fit_and_predict_one(data_t=data,target_t=target)
+
         self.model.fit(data,target)
+        
 
         # print(target)
         
@@ -651,6 +687,7 @@ class ScannerDespachante(LerningDigits):
 
         max_width = max(myContours,key=lambda r:r[0] + r[2])[0]
         max_height = min(myContours,key=lambda r:r[3])[3]
+
         nearest = max_height * 1.4
         myContours.sort(key=lambda r: r[1] + r[0])
 
@@ -713,7 +750,7 @@ class ScannerDespachante(LerningDigits):
         print(self.model.predict(new_featues))
         self.showImage()
 
-        self.pushData(new_featues,numpy.array([0,0,4,9,7,6,1,7,4,8,9]))
+        self.pushData(new_featues,numpy.array([0,0,4,9,7,6,1,7,4,3,9]))
 
         
         # marc = [0,1,1,1,2,7,2,9,7,0,1]
@@ -898,55 +935,3 @@ class ScannerDespachante(LerningDigits):
         # cv2.destroyAllWindows()
         # for cnt in contours:
         #     (x,y,w,h) = 
-
-
-# lerning = LerningDigits()
-# lerning.startFeatures()
-# lerning.fitClf()
-# lerning.saveLerning()
-# video = cv2.VideoCapture(0)
-# while (True):
-#     (grabbed , frame) = video.read()
-#     horl = FrameCamera(rat=grabbed,frame=frame)
-#     horl.inRange([0,0,0],[100,100,100],mask=True)
-#     horl.cameraShow()
-#     if cv2.waitKey(1) == 27:
-#         break
-# video.release()
-# cv2.destroyAllWindows()
-# digits = datasets.load_digits()
-# im = numpy.zeros((128,128))
-# im[32:-32,32:-32] = 1
-# edges = feature.canny(im)
-# fig , (x1,x2,x3) = plt.subplots(nrows=1,ncols=3,figsize=(8,2),sharex=True,sharey=True)
-# x2.imshow(edges,cmap=plt.cm.gray)
-# x2.axis('off')
-# x2.set_title('canny',fontsize=20)
-# fig.tight_layout()
-# plt.show()
-# print(digits)
-# img = ScannerDespachante(image='images/Scanner_20180820 (5)-1.png')
-# img.imageFraca()
-# img.forceHSV()
-# img.findContours()
-# img.findContours()
-# img.black()
-# img.react()
-# img.inRange([0,0,0],[140,140,140],mask=False)
-# img.showImage()
-# img.green()
-# img.black()
-# img.blackandwrite()
-# img.showImage()
-# img.threshold()
-# img.dilate()
-# img.morphologyEx()
-# img.dilate()
-# img.showImage()
-# data = pandas.read_csv("cvfile.csv",names=['data','target'])
-# print(data[:,data.columns])
-# df = pandas.DataFrame([1,2,32],columns=['data'])
-# print(df)
-# df['target'] = marc
-
-# df.to_csv('fileMachine.csv',index=False)
