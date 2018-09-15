@@ -5,13 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c319c0ed-cf1b-4d25-9635-40852b2ad64b" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fileMachine.csv" beforeDir="false" afterPath="$PROJECT_DIR$/fileMachine.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fileMachinetest.csv" beforeDir="false" afterPath="$PROJECT_DIR$/fileMachinetest.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/opencv_workspace/opencv" beforeDir="false" afterPath="$PROJECT_DIR$/opencv_workspace/opencv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/opencv_workspace/opencv/apps/traincascade/boost.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/opencv_workspace/opencv/apps/traincascade/boost.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/robot/Despachante.py" beforeDir="false" afterPath="$PROJECT_DIR$/robot/Despachante.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -66,7 +61,7 @@
     <session id="-594891078">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="3" />
+          <entry key="project.closed" value="4" />
           <entry key="project.open.time.13" value="1" />
           <entry key="project.open.time.14" value="1" />
           <entry key="project.open.time.2" value="1" />
@@ -229,11 +224,11 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="4">
-    <option name="x" value="1236" />
-    <option name="y" value="-2" />
-    <option name="width" value="1324" />
-    <option name="height" value="1082" />
+  <component name="ProjectFrameBounds">
+    <option name="x" value="700" />
+    <option name="y" value="21" />
+    <option name="width" value="1657" />
+    <option name="height" value="921" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -419,15 +414,14 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1236" y="-2" width="1324" height="1082" extended-state="4" />
-    <editor active="true" />
+    <frame x="700" y="21" width="1657" height="921" extended-state="0" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49842766" visible="true" weight="0.24442737" />
-      <window_info active="true" id="Structure" order="1" sideWeight="0.5015723" side_tool="true" visible="true" weight="0.24442737" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.4993679" visible="true" weight="0.19461444" />
+      <window_info active="true" id="Structure" order="1" sideWeight="0.5006321" side_tool="true" visible="true" weight="0.19461444" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.4988831" visible="true" weight="0.33193278" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.4988831" weight="0.39949432" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.3993808" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />

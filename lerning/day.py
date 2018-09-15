@@ -83,7 +83,7 @@ def render(image,name):
         image = cv2.imread(name)
 
         # imgs = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
-        image[((g > r) & (g > b)) & ((r > 100))] = [255, 255, 255]
+        image[((g > r) & (g > b)) & ((r > 100))] = [255, 255, 255]  
 
         cv2.imwrite(filename='verde.jpg',img=image)
 

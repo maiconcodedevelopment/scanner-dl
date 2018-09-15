@@ -4,9 +4,10 @@ const electron = require('electron')
 let win = null
 
 app.on('ready',() => {
+
     win = new BrowserWindow({
        width : 1200,
-       height : 800
+       height : 1000
     })
 
     win.loadURL("http://localhost:8080")
@@ -14,6 +15,7 @@ app.on('ready',() => {
     win.on('closed',() => {
         win = null
     })
+
 })
 
 
