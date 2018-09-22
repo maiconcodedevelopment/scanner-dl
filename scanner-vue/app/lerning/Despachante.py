@@ -33,7 +33,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import fetch_mldata
 from sklearn.externals import joblib
-from sklearn.cross_validation import cross_val_score
+from sklearn.model_selection import cross_val_score
 from sklearn.multiclass import OneVsRestClassifier , OneVsOneClassifier
 
 #scipy
@@ -94,7 +94,7 @@ class CrossMachine(object):
 class LerningDataCSV(object):
 
     def __init__(self):
-        self.df = pandas.read_csv("fileMachine.csv")
+        self.df = pandas.read_csv("/opt/lampp/htdocs/scanner/scanner-vue/app/lerning/fileMachine.csv")
 
     def pushData(self,dataframe,target):
          df = pandas.DataFrame(dataframe)
@@ -104,10 +104,9 @@ class LerningDataCSV(object):
 class LerningDigits(LerningDataCSV):
 
     def __init__(self):
-
-        self.df = pandas.read_csv("fileMachine.csv")
+        self.df = pandas.read_csv("/opt/lampp/htdocs/scanner/scanner-vue/app/lerning/fileMachine.csv")
         self.model = LinearSVC()
-        self.model_cross = CrossMachine(10)
+        self.model_cross = CrossMachine(9)
 
         data = self.df[self.df.columns[0:36]]
         data = data.values
@@ -143,12 +142,12 @@ class LerningDigits(LerningDataCSV):
 
         # print(target)
         
-        x_train , y_train , x_test , y_test = train_test_split(data,target,test_size=1/7.0,random_state=0)
+        # x_train , y_train , x_test , y_test = train_test_split(data,target,test_size=1/7.0,random_state=0)
 
-        model = LinearSVC()
-        model.fit(data,target)
+        # model = LinearSVC()
+        # model.fit(data,target)
 
-        predict = model.predict(numpy.array(data[2:4]))
+        # predict = model.predict(numpy.array(data[2:4]))
 
         # print(self.df)
         # exit()
@@ -157,19 +156,19 @@ class LerningDigits(LerningDataCSV):
         # exit()
         # self.model.fit(self.df['data'],self.df['target'])
 
-        self.clf = LinearSVC()
-        self.neighnors = KNeighborsClassifier(n_neighbors=7)
+        # self.clf = LinearSVC()
+        # self.neighnors = KNeighborsClassifier(n_neighbors=7)
 
         self.clfPack = None
         self.images = []
 
-        self.datasets = fetch_mldata("MNIST Original")
+        # self.datasets = fetch_mldata("MNIST Original")
 
-        self.features = numpy.array(self.datasets.data,'int16')
-        self.labels = numpy.array(self.datasets.target,'int')
+        # self.features = numpy.array(self.datasets.data,'int16')
+        # self.labels = numpy.array(self.datasets.target,'int')
 
-        print(self.features[0])
-        print("quantaty : {0}".format(len(self.features[0])))
+        # print(self.features[0])
+        # print("quantaty : {0}".format(len(self.features[0])))
 
         self.list_host_fd = []
         self.host_features = None
@@ -177,14 +176,14 @@ class LerningDigits(LerningDataCSV):
     def startFeatures(self):
 
         for feature in self.features:
-            fd = hog(feature.reshape((28,28)),orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),visualise=False)
+            fd = hog(feature.reshape((28,28)),orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),block_norm='L2-Hys')
             self.list_host_fd.append(fd)
 
-        print('-------- image list host --------')
-        print(self.list_host_fd[0])
+        # print('-------- image list host --------')
+        # print(self.list_host_fd[0])
         self.host_features = numpy.array(self.list_host_fd,'float64')
-        print(self.host_features[0])
-        print("quantaty : {0}".format(len(self.host_features[0])))
+        # print(self.host_features[0])
+        # print("quantaty : {0}".format(len(self.host_features[0])))
 
     def startFit(self):
         if not self.host_features is None:
@@ -201,8 +200,8 @@ class LerningDigits(LerningDataCSV):
     def train_image(self):
         x_train , y_train , x_test , y_test  = train_test_split(self.features,self.labels,test_size=0.2,random_state=42)
 
-        print(x_train)
-        print(y_train)
+        # print(x_train)
+        # print(y_train)
 
 
 
@@ -225,14 +224,14 @@ class ScannerDespachante(LerningDigits):
     def __init__(self,image="",name="imageDespachange.jpg",rotate=False):
         super(self.__class__,self).__init__()
 
-        self.startFeatures()
-        self.startFit()
+        # self.startFeatures()
+        # self.startFit()
         self.imagename = image
 
         self.image = cv2.imread(image)
         self.image1 = self.image
 
-        self.templade_match = []        
+        self.templade_match = []
 
         if rotate:
             rotated = imutils.rotate_bound(self.image, 27)
@@ -301,7 +300,7 @@ class ScannerDespachante(LerningDigits):
         # print(numpy.max(longs[:,3],axis=0))
         x,y,w,h = longs
         self.image = self.image1[y:y + h,x:x + w]
-        print("x : {2} , y : {3} , w {0} h {1} ".format(w,h,x,y))
+        # print("x : {2} , y : {3} , w {0} h {1} ".format(w,h,x,y))
         # print(longs)
 
         # self.image =  self.image1[y:y + h,x:x + w]
@@ -313,15 +312,15 @@ class ScannerDespachante(LerningDigits):
 
         # exit()
 
-        print(" langs {0}".format(longs))
+        # print(" langs {0}".format(longs))
 
-        print("a: {0} , l : {1}".format(a,l))
+        # print("a: {0} , l : {1}".format(a,l))
 
         altura = 3000
         largura = int(((altura / ( a / 100)) / 100) * l)
 
         # print('_____')
-        print("altura : {0} , largura : {1}".format(altura,largura))
+        # print("altura : {0} , largura : {1}".format(altura,largura))
 
         # print("{:10.2f}".format(altura))
 
@@ -332,13 +331,13 @@ class ScannerDespachante(LerningDigits):
         a = self.image.shape[0]
         l = self.image.shape[1]
 
-        print(a)
-        print(l)
+        # print(a)
+        # print(l)
 
         tY , bY = (int(altura * 0.16),int(altura * 0.206))
         lX , rX = (int(largura * 0.136),int(largura * 0.320))
 
-        print("top: {0} bottom: {1} , left : {2} right  : {3}".format(tY,bY,lX,rX))
+        # print("top: {0} bottom: {1} , left : {2} right  : {3}".format(tY,bY,lX,rX))
 
         # print(a)
         # print(l)
@@ -472,12 +471,12 @@ class ScannerDespachante(LerningDigits):
         cleaded_img_without_lines = cv2.bitwise_not(cleaded_img_without_lines)
 
         self.image = cleaded_img_without_lines
-        self.showImage()
+        # self.showImage()
 
 
     def forceHSV(self):
         
-        self.showImage()
+        # self.showImage()
 
         img_rgb = self.image
         img_rgb = cv2.medianBlur(img_rgb,5)
@@ -553,7 +552,7 @@ class ScannerDespachante(LerningDigits):
 
                 pts1 = (int(x0 + 1000 * (-b)), int(y0 + 1000 *(a)))
                 pts2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 *(a)))
-                cv2.line(img_rgb,pts1,pts2,(255,255,255),4)
+                cv2.line(img_rgb,pts1,pts2,(255,255,255),8)
                 # cv2.line(img_rgb,(x1,y1),(x2,y2),(0,0,255),2)
 
         
@@ -579,8 +578,8 @@ class ScannerDespachante(LerningDigits):
 
         hist = cv2.calcHist([chain[1],chain[0]],[0,1],None,[32,32],[0,256,0,256])
 
-        cv2.imshow("hist",hist)
-        cv2.waitKey(0)
+        # cv2.imshow("hist",hist)
+        # cv2.waitKey(0)
 
         clahe = cv2.createCLAHE(clipLimit=2.0,tileGridSize=(10,10))
         cl1 = clahe.apply(self.image)
@@ -588,27 +587,57 @@ class ScannerDespachante(LerningDigits):
         input_image = cv2.GaussianBlur(self.image,(5,5),0)
 
         self.image = input_image
-        self.showImage()
+        # self.showImage()
 
         rat , input_image = cv2.threshold(input_image,125,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)
         input_image = cv2.bitwise_not(input_image)
 
         self.image = input_image
-        self.showImage()
+        
+        # self.showImage()
 
         get_struct = cv2.getStructuringElement(cv2.MORPH_RECT,(6,6))
 
         react_struct = numpy.array((
-            [0,0,0,1,1,1,1,0,0,0],
-            [0,1,1,1,1,1,1,1,1,0],
-            [0,0,1,1,1,1,1,1,0,0],
-            [0,0,1,1,1,1,1,1,0,0],
-            [0,0,1,1,1,1,1,1,0,0],
-            [0,1,1,1,1,1,1,1,1,0],
-            [0,0,0,1,1,1,1,0,0,0]
+            [0,0,1,1,1,0,0],
+            [0,1,1,1,1,1,0],
+            [0,1,1,1,1,1,0],
+            [0,1,1,1,1,1,0],
+            [0,1,1,1,1,1,0],
+            [0,0,1,1,1,0,0]
         ),numpy.uint8)
 
         self.image = cv2.morphologyEx(self.image,cv2.MORPH_OPEN,react_struct)
+
+        # self.image = cv2.bitwise_not(self.image)
+
+        # fast = cv2.FastFeatureDetector()
+        # kp = fast.detect(self.image,None)
+        # img2 = cv2.drawKeypoints(self.image,kp,color=(255,0,0))
+        # self.image = img2
+        # self.showImage()
+        # self.showImage()
+
+        # image = numpy.float32(self.image)
+        # corners = cv2.goodFeaturesToTrack(self.image,100,0.01,10)
+        # corners = numpy.int0(corners)
+
+        # for corner in corners:
+        #     x , y = corner.ravel()
+        #     cv2.circle(img_rgb,(x,y),3,255,-1)
+
+        # self.image = img_rgb
+        # self.showImage()
+
+        # dst = cv2.cornerHarris(image,2,3,0.04)
+        # dst = cv2.dilate(dst,None)
+
+        # img_rgb[dst>0.01*dst.max()] = [0,0,255]
+        # self.image = img_rgb
+        # self.showImage()
+
+
+        # exit()
         # self.dilateImage(value=(5,5),iterations=1)
 
         # react_struct = numpy.array((
@@ -623,23 +652,22 @@ class ScannerDespachante(LerningDigits):
         #     [0,1,1,1,1,0],
         #     [0,1,1,1,1,0]
         # ),numpy.uint8)
-        
+
         # self.image = cv2.morphologyEx(self.image,cv2.MORPH_OPEN,react_struct)
         # self.showImage()
-
         react_struct = numpy.array((
-            [1,1,1,1,0,0,1,1,1,1],
-            [0,0,1,1,1,1,1,1,0,0],
-            [0,0,1,1,1,1,1,1,0,0],
-            [0,0,1,1,1,1,1,1,0,0],
-            [0,0,1,1,1,1,1,1,0,0],
-            [1,1,1,1,0,0,1,1,1,1]
+            [0,1,1,0,0,1,1,0],
+            [0,1,1,1,1,1,1,0],
+            [0,1,1,1,1,1,1,0],
+            [0,1,1,1,1,1,1,0],
+            [0,1,1,1,1,1,1,0],
+            [0,1,1,0,0,1,1,0]
         ),numpy.uint8)
 
-        self.image = cv2.morphologyEx(self.image,cv2.MORPH_OPEN,react_struct)
-        self.showImage()
 
-        exit()
+        self.image = cv2.morphologyEx(self.image,cv2.MORPH_OPEN,react_struct)
+
+        # exit()
 
         get_close = cv2.getStructuringElement(cv2.MORPH_CROSS,(4,10))
         
@@ -652,8 +680,10 @@ class ScannerDespachante(LerningDigits):
             [0,0,0,0,0,0,0,0]
         ),numpy.uint8)
 
-        self.image = cv2.morphologyEx(self.image,cv2.MORPH_CLOSE,join)
-        self.showImage()
+        # self.image = cv2.morphologyEx(self.image,cv2.MORPH_CLOSE,join)
+        # self.showImage()
+
+
         # close_struct = cv2.getStructuringElement(cv2.MORPH_RECT,(3,10))
         # self.image = cv2.morphologyEx(self.image,cv2.MORPH_OPEN,close_struct)
         # self.showImage()
@@ -676,7 +706,7 @@ class ScannerDespachante(LerningDigits):
 
         self.dilateImage(value=(1,1),iterations=1)
 
-        self.showImage()
+        # self.showImage()
 
     def images_read(self,path = None,list_image=[]):
 
@@ -806,9 +836,9 @@ class ScannerDespachante(LerningDigits):
             
             if (rect[2] >= 15 and rect[2] <= 70) and (rect[3] >= 45 and rect[3] <= 80):
 
-                print("tamanho ---")
-                print(rect)
-                print("tamanho ---")
+                # print("tamanho ---")
+                # print(rect)
+                # print("tamanho ---")
     
 
                 cv2.rectangle(self.image, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (255, 0, 0), 3)
@@ -822,7 +852,7 @@ class ScannerDespachante(LerningDigits):
                 # cv2.waitKey(0)
                 roi = cv2.resize(roi,(28,28),interpolation=cv2.INTER_AREA)
 
-                hoi_hog_fd = hog(roi,orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),visualise=False)
+                hoi_hog_fd = hog(roi,orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),block_norm='L2-Hys')
                 self.images.append(roi)
                 predict = self.model.predict(numpy.array([hoi_hog_fd], 'float64'))
                 cv2.putText(self.image, str(int(predict)), (rect[0], rect[1]),cv2.FONT_HERSHEY_DUPLEX, 2, (255, 0, 0), 3)
@@ -833,23 +863,24 @@ class ScannerDespachante(LerningDigits):
         # cv2.imshow("machine",gray)
         # cv2.waitKey(0)
         cv2.destroyAllWindows()
+        self.showImage()
         # exit()
         # model_s = LinearSVC()
         # model_s.fit(self.images,numpy.array([0,0,6,9,4,9,3,8,1,9,0]))
         new_featues = []
         for feature in self.images:
-            img = hog(feature.reshape((28,28)),orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),visualise=False)
+            img = hog(feature.reshape((28,28)),orientations=9,pixels_per_cell=(14,14),cells_per_block=(1,1),block_norm='L2-Hys')
             new_featues.append(img)
 
         
         # print(new_featues)
         new_featues = numpy.array(new_featues,'float64')
 
-        print(self.model.predict(new_featues))
-        self.showImage()
+        # print(self.model.predict(new_featues))
+        # self.showImage()
 
         
-        # marc = [0,1,1,1,2,7,2,9,7,0,1]
+        # marc = [0,0,2,2,9,0,1,2,5,6,6]
         # df = pandas.DataFrame(new_featues)
         # df['data'] = new_featues
         # df['target'] = marc
@@ -859,6 +890,7 @@ class ScannerDespachante(LerningDigits):
         # self.df = pandas.concat([self.df,df],sort=True)
         # print(self.df)
         # df.to_csv('fileMachine4.csv',index=False)
+        # self.pushData(dataframe=df,target=marc)
 
         # print("quantidade de features : {0}".format(len(new_featues)))
 
@@ -982,3 +1014,25 @@ class ScannerDespachante(LerningDigits):
         
         # self.showImage()
         # self.image = thresh
+
+if __name__ == "__main__":
+
+    scanners = sys.argv[1]
+    for scanner in scanners.replace("[","").replace("]","").split(","):
+        scanner = ScannerDespachante(scanner)
+        scanner.showImage()
+        scanner.forceHSV()
+        scanner.morphologyEx()
+    # scanner.showImage()
+    # print(scanners[0].split(","))
+    # paths =  [ path for path in scanners[0].split(",")]
+    # for path in paths:
+        # print(path)
+    # scanner = ScannerDespachante(str(scanner))
+    # scanner.showImage()
+    # for scanner i/n scanners:
+        # print(scanner)
+    # scanner.forceHSV()
+    # scanner.morphologyEx()
+    # df = pandas.DataFrame("fileMachine.csv")
+    # print(df)

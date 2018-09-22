@@ -3,7 +3,7 @@
        <img class="select-path-icone" v-bind:src="icones.path" />
        <h2>Selecione uma pasta de origem</h2>
        <p>Escolha uma pasta no seu computador onde contém todos os documentos que deseja escanear.</p>
-       <button type="button" v-on:click="selectFolder" > <font-awesome-icon icon="search" />   Procurar no computador</button>
+       <button type="button" @click="selectFolder" > <font-awesome-icon icon="search" />   Procurar no computador</button>
    </div>
 </template>
 
@@ -18,6 +18,7 @@ export default {
       icones
     };
   },
+  mounted() {},
   methods: {
     selectFolder() {
       ipcRenderer.send("select-path", "teste do argumento");

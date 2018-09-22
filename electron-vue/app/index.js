@@ -1,24 +1,21 @@
-const {  BrowserWindow ,    app } = require('electron')
-const electron = require('electron')
+const { BrowserWindow, app } = require("electron");
+const electron = require("electron");
 
-let win = null
+let win = null;
 
-app.on('ready',() => {
+app.on("ready", () => {
+  win = new BrowserWindow({
+    width: 1200,
+    height: 1000
+  });
 
-    win = new BrowserWindow({
-       width : 1200,
-       height : 1000
-    })
+  win.loadURL("http://localhost:8080");
 
-    win.loadURL("http://localhost:8080")
+  win.on("closed", () => {
+    win = null;
+  });
+});
 
-    win.on('closed',() => {
-        win = null
-    })
-
-})
-
-
-app.on('window-all-closed',() => {
-    app.quit()
-})
+app.on("window-all-closed", () => {
+  app.quit();
+});

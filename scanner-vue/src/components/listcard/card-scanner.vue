@@ -1,11 +1,12 @@
 <template>
     <div class="card__scanner">
-       <div class="card__scanner__select">
-           <input type="checkbox" id="checkbox__select" name="scanner" class="select__scanner">
+       <div class="card__scanner__select" @click="selectChebox" >
+           <input type="checkbox" id="checkbox__select" name="scanner" class="select__scanner" :class="{ active }">
            <label for="checkbox__select" class="checkmark"></label>
        </div>
-       <h4 class="card__scanner__title">scanner_pape.jpg</h4>
-       <div class="card__scanner__remove">
+       {{ scanner }}
+       <h4 class="card__scanner__title">{{ path }}</h4>
+       <div class="card__scanner__remove" @click="removeScanner" >
            <font-awesome-icon icon="trash-alt" />
        </div>
     </div>    
@@ -15,10 +16,27 @@
 <script>
 export default {
   name: "card-scanner",
+  model: {
+    prop: "active",
+    event: "click"
+  },
   props: {
-    name: {
+    path: {
       type: String,
       require: false
+    },
+    active: {
+      type: Boolean,
+      require: false
+    },
+    scanner: Object
+  },
+  methods: {
+    selectChebox() {
+      this.$emit("click", !this.active);
+    },
+    removeScanner() {
+      this.$emit("remove", this.path);
     }
   }
 };
@@ -75,7 +93,7 @@ export default {
       position: absolute;
       opacity: 0;
       cursor: pointer;
-      &:checked + .checkmark {
+      &.active + .checkmark {
         border: none;
         background-color: #f6e60a;
         &::after {

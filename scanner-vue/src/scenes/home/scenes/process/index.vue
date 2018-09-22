@@ -7,12 +7,12 @@
                 <div class="head__path">
                     <h4 class="head__path__title">Pasta de origem</h4>
                     <p class="head__path__adress"></p>
-                    <button type="button">Alterar</button>
+                    <button type="button" @click="selectFolder">Alterar</button>
                 </div>
             </div>
             <div class="container__process__document">
                 <div class="process__document__head">
-                    <font-awesome-icon icon="image" />
+                    <font-awesome-icon icon="image" /> 
                     <div class="document__head">
                         <h4 class="document__head__title">Arquivos encontrados</h4>
                         <p class="document__head__subtitle">Confira a relação das imagens encontradas na pasta selecionada</p>
@@ -20,20 +20,27 @@
                 </div>
                 <div class="process__document__list">
                     <div class="process__document__list__head">
-                        <div class="process__document__select">
-                            <input type="checkbox" name="checkbox__all" id="checkbox__all" class="process__document__checkbox">
-                            <label for="checkbox__all" class="checkmark"></label>
+                        <div class="process__document__select" >
+                            <input type="checkbox" name="checkbox__all" id="checkbox__all" class="process__document__checkbox" :class="{ listactiveall }" >
+                            <label for="checkbox__all"  @click="activelisteAll" class="checkmark"></label>
                         </div>
                         <h4 class="process__document__title">NOME DO ARQUIVO</h4>
                     </div>
-                     <cardscanner />
+                    <div class="process__document__list__cards">
+                      <cardscanner v-for="(scanner,index) in listscanner" 
+                                   v-bind:key="index" 
+                                   :path="scanner.path"
+                                   :active="scanner.active"
+                                   @remove="remove"
+                                   :scanner="scanner"
+                                   v-model="scanner.active" />
+                    </div>
                 </div>
-                <div class="process__document__start">
-                  <h5 class="process__document_start__title">Você selecionou 20 arquivos</h5>
-                  <button type="button"> <font-awesome-icon icon="barcode"/> Escanear arquivos selecionados</button>
-                </div>
-
             </div>
+            <div class="process__document__start" v-show="showbarbottom">
+                  <h5 class="process__document_start__title">Você selecionou 20 arquivos</h5>
+                  <button type="button" @click="scannerDocuments" > <font-awesome-icon icon="barcode"/> Escanear arquivos selecionados</button>
+                </div>
           </div>
           <div class="container__process__document__scanner">
               <scannerdocument/>
@@ -44,6 +51,8 @@
 
 
 <script>
+const { ipcRenderer } = window.require("electron");
+
 import { icones } from "@/images";
 
 import scannerdocument from "@/components/scanner/scanner-document";
@@ -54,6 +63,74 @@ export default {
   components: {
     cardscanner,
     scannerdocument
+  },
+  data() {
+    return {
+      listscanner: [],
+      listactive: false,
+      listactiveall: false,
+      showbarbottom: true
+    };
+  },
+  mounted() {
+    ipcRenderer.on("paths", (event, list) => {
+      list = list.replace(/'/g, '"');
+      list = JSON.parse(list);
+      list.map((path, index) => {
+        this.listscanner.push({ path, active: false });
+      });
+    });
+  },
+  watch: {
+    listactiveall: function(value, oldvalue) {
+      if (value) {
+        this.listscanner.map(scanner => (scanner.active = true));
+      } else {
+        this.listscanner.map(scanner => (scanner.active = false));
+      }
+    }
+  },
+  methods: {
+    selectFolder() {
+      this.showbarbottom = true;
+      this.listactiveall = false;
+      this.listactive = false;
+
+      ipcRenderer.send("select-path", "teste do argumento");
+      this.$router.push({ name: "process" });
+      console.log("push name");
+    },
+    activelisteAll() {
+      this.listactiveall = !this.listactiveall;
+      console.log("sim");
+    },
+    remove(path) {
+      this.listscanner.map((scanner, index) => {
+        if (scanner.path == path) {
+          this.listscanner.splice(index, 1);
+        }
+      });
+    },
+    scannerDocuments() {
+      let documents = this.listscanner.filter(scanner => {
+        return scanner.active;
+      });
+
+      if (documents.length > 0) {
+        this.showbarbottom = false;
+        this.scannerDocumentsRenavam();
+      } else {
+        console.log("not length");
+      }
+    },
+    scannerDocumentsRenavam() {
+      console.log("aqui");
+      let paths = [];
+      this.listscanner.map(scanner => {
+        paths.push(scanner.path);
+      });
+      ipcRenderer.send("scanner-document", paths);
+    }
   }
 };
 </script>
@@ -146,7 +223,7 @@ export default {
       width: 100%;
       height: 120px;
 
-      padding: 60px 0px 0px 0px;
+      padding: 40px 0px 0px 0px;
 
       display: flex;
       align-items: flex-start;
@@ -188,6 +265,7 @@ export default {
 
       padding: 0px;
       width: 100%;
+      height: 100%;
       .process__document__list__head {
         width: 100%;
         height: 65px;
@@ -232,7 +310,7 @@ export default {
             position: absolute;
             opacity: 0;
             cursor: pointer;
-            &:checked + .checkmark {
+            &.listactiveall + .checkmark {
               display: block;
               background-color: #f6e60a;
               border: 0;
@@ -251,46 +329,48 @@ export default {
           color: #ffffff;
         }
       }
+      .process__document__list__cards {
+        flex: 1;
+        width: 100%;
+        height: 100%;
+        overflow-y: scroll;
+      }
     }
-    .process__document__start {
-      position: absolute;
-      bottom: 0;
-      left: 0;
+  }
+  .process__document__start {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row;
+
+    padding: 0px 10% 0px 10%;
+
+    width: 100%;
+    height: 95px;
+    background-color: white;
+    .process__document_start__title {
+      font-family: Roboto;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: left;
+      color: #565655;
+    }
+    button[type="button"] {
+      width: 282px;
+      height: 54px;
+      border-radius: 3px;
+      background-color: #ffef14;
 
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: space-around;
       flex-direction: row;
-
-      padding: 0px 10% 0px 10%;
-
-      width: 100%;
-      height: 95px;
-      background-color: white;
-      .process__document_start__title {
-        font-family: Roboto;
-        font-size: 16px;
-        font-weight: bold;
-        text-align: left;
-        color: #565655;
-      }
-      button[type="button"] {
-        width: 282px;
-        height: 54px;
-        border-radius: 3px;
-        background-color: #ffef14;
-
-        display: flex;
-        align-items: center;
-        justify-content: space-around;
-        flex-direction: row;
-        border-style: none;
-        cursor: pointer;
-        font-family: Roboto;
-        font-size: 14.5px;
-        font-weight: 500;
-        color: #565655;
-      }
+      border-style: none;
+      cursor: pointer;
+      font-family: Roboto;
+      font-size: 14.5px;
+      font-weight: 500;
+      color: #565655;
     }
   }
 }

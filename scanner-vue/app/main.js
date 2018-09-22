@@ -31,34 +31,47 @@ app.on("ready", () => {
       }
     }
   );
+
+  ipcMain.on("select-path", (event, args) => {
+    // console.log(args);
+    dialog.showOpenDialog(
+      { properties: ["openDirectory", "multiSelections"] },
+      dirPath => {
+        let pathFiles = dirPath[0];
+
+        pytonShell.PythonShell.run(
+          `${__dirname}/lerning/Paths.py`,
+          { pythonOptions: ["-u"], args: [pathFiles] },
+          (err, results) => {
+            if (err) throw err;
+            // list = results[0].replace(/'/g, '"');
+            // list = JSON.parse(list);
+            // list.map(path => {
+            //   console.log(path);
+            // });
+            win.webContents.send("paths", results[0]);
+          }
+        );
+      }
+    );
+  });
+
+  ipcMain.on("scanner-document", (event, args) => {
+    pytonShell.PythonShell.run(
+      `${__dirname}/lerning/Despachante.py`,
+      {
+        pythonOptions: ["-u"],
+        args: [args]
+      },
+      (err, resutls) => {
+        if (err) throw err;
+        console.log(resutls);
+      }
+    );
+  });
 });
 
 // session.defaultSession.se
-
-ipcMain.on("select-path", (event, args) => {
-  console.log(args);
-  dialog.showOpenDialog(
-    { properties: ["openDirectory", "multiSelections"] },
-    dirPath => {
-      let options = {
-        mode: "text",
-        pythonPath: "/usr/bin/python3",
-        pythonOptions: ["-u"], // get print results in real-time
-        scriptPath: "./",
-        args: ["value1", "value2", "value3"]
-      };
-
-      pytonShell.PythonShell.run(
-        `${__dirname}/robot.py`,
-        options,
-        (err, results) => {
-          if (err) throw err;
-          console.log(results);
-        }
-      );
-    }
-  );
-});
 
 app.on("window-all-closed", () => {
   app.quit();
