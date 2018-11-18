@@ -1,10 +1,15 @@
 <template>
     <div class="card__scanner">
        <div class="card__scanner__select" @click="selectChebox" >
-           <input type="checkbox" id="checkbox__select" name="scanner" class="select__scanner" :class="{ active }">
+           
+           <input type="checkbox" 
+                  id="checkbox__select" 
+                  name="scanner" 
+                  class="select__scanner" 
+                  :class="{ active }">
+
            <label for="checkbox__select" class="checkmark"></label>
        </div>
-       {{ scanner }}
        <h4 class="card__scanner__title">{{ path }}</h4>
        <div class="card__scanner__remove" @click="removeScanner" >
            <font-awesome-icon icon="trash-alt" />
@@ -28,8 +33,7 @@ export default {
     active: {
       type: Boolean,
       require: false
-    },
-    scanner: Object
+    }
   },
   methods: {
     selectChebox() {

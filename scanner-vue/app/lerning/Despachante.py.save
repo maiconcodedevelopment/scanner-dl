@@ -1,4 +1,4 @@
-import os
+]]]import os
 import sys
 import cv2
 import csv
@@ -639,6 +639,6 @@ if __name__ == "__main__":
         scanner.readImage(scannerDocument)
         scanner.forceHSV()
         scanner.morphologyEx()
-        scanner.showImage()
+        # scanner.showImage()
 
     print(scanner.scannerDocuments)

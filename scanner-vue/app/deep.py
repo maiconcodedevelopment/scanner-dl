@@ -77,6 +77,7 @@ print(np.exp(0))
 
 # print(total)
 # print(step)
-
+import cv2
+cv2.KNearest()
 #context
 # descoverta de novos remedios , entendimento de lunguagem natual , carros autonomos , recnhecimento facil , cura para doenças , bolsa de valores , encontrar soluções para controle de tráfego

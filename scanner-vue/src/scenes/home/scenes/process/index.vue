@@ -14,11 +14,11 @@
                 <div class="process__document__head">
                     <font-awesome-icon icon="image" /> 
                     <div class="document__head">
-                        <h4 class="document__head__title">Arquivos encontrados</h4>
-                        <p class="document__head__subtitle">Confira a relação das imagens encontradas na pasta selecionada</p>
+                        <h4 class="document__head__title">{{ scannerDocumentHead.title }}</h4>
+                        <p class="document__head__subtitle">{{ scannerDocumentHead.subTitle }}</p>
                     </div>
                 </div>
-                <div class="process__document__list">
+                <div class="process__document__list" v-show="showbarbottom">
                     <div class="process__document__list__head">
                         <div class="process__document__select" >
                             <input type="checkbox" name="checkbox__all" id="checkbox__all" class="process__document__checkbox" :class="{ listactiveall }" >
@@ -26,15 +26,22 @@
                         </div>
                         <h4 class="process__document__title">NOME DO ARQUIVO</h4>
                     </div>
-                    <div class="process__document__list__cards">
-                      <cardscanner v-for="(scanner,index) in listscanner" 
-                                   v-bind:key="index" 
+                    <div class="process__document__list__cards"  >
+                      <cardscanner v-for="(scanner,index) in listscanner"
+                                   v-bind:key="index"
                                    :path="scanner.path"
                                    :active="scanner.active"
                                    @remove="remove"
-                                   :scanner="scanner"
                                    v-model="scanner.active" />
                     </div>
+                </div>
+                <div class="process__document__list__read" v-show="!showbarbottom">
+                  <div class="process__document__list__read__reload">
+                    <span class="process__document__list__read__reload__line"></span>
+                  </div>
+                </div>
+                <div class="process__document__scanner__list__read">
+
                 </div>
             </div>
             <div class="process__document__start" v-show="showbarbottom">
@@ -69,7 +76,18 @@ export default {
       listscanner: [],
       listactive: false,
       listactiveall: false,
-      showbarbottom: true
+      showbarbottom: true,
+      scannerState: [
+        {
+          title: "Arquivos encontrados",
+          subTitle:
+            "Confira a relação das imagens encontradas na pasta selecionada"
+        },
+        {
+          title: "100 arquivos foram escaneados com sucesso",
+          subTitle: "100% dos arquivos tiveram o Renavam escaneado."
+        }
+      ]
     };
   },
   mounted() {
@@ -80,6 +98,11 @@ export default {
         this.listscanner.push({ path, active: false });
       });
     });
+
+    ipcRenderer.on("predicts", (event, arg) => {
+      let scanner = arg[0];
+      console.log(JSON.parse(scanner.replace(/'/g, '"')));
+    });
   },
   watch: {
     listactiveall: function(value, oldvalue) {
@@ -87,6 +110,15 @@ export default {
         this.listscanner.map(scanner => (scanner.active = true));
       } else {
         this.listscanner.map(scanner => (scanner.active = false));
+      }
+    }
+  },
+  computed: {
+    scannerDocumentHead() {
+      if (!this.showbarbottom) {
+        return this.scannerState[1];
+      } else {
+        return this.scannerState[0];
       }
     }
   },
@@ -266,6 +298,7 @@ export default {
       padding: 0px;
       width: 100%;
       height: 100%;
+
       .process__document__list__head {
         width: 100%;
         height: 65px;
@@ -335,6 +368,54 @@ export default {
         height: 100%;
         overflow-y: scroll;
       }
+    }
+
+    .process__document__list__read {
+      width: 100%;
+      height: auto;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: row;
+      .process__document__list__read__reload {
+        height: 18px;
+        flex-basis: 100%;
+        padding: 0px 3px;
+        border-radius: 9px;
+        background-color: #e6e6e6;
+        box-shadow: inset 0px 2px 4px 0 rgba(0, 0, 0, 0.05);
+
+        display: flex;
+        align-items: center;
+        justify-content: start;
+        flex-direction: row;
+        position: relative;
+
+        .process__document__list__read__reload__line {
+          animation: 1s reload ease-in-out;
+          height: 12px;
+          transition: 1s ease-in-out;
+
+          width: 100%;
+
+          border-radius: 6px;
+          background-image: linear-gradient(to left, #30e881, #ade6c6);
+        }
+
+        @keyframes reload {
+          0% {
+            width: 0%;
+          }
+          100% {
+            width: 100%;
+          }
+        }
+      }
+    }
+    .process__document__scanner__list__read {
+      height: auto;
+      width: 100%;
     }
   }
   .process__document__start {

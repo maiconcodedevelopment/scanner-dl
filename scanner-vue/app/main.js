@@ -65,6 +65,7 @@ app.on("ready", () => {
       },
       (err, resutls) => {
         if (err) throw err;
+        event.sender.send("predicts", resutls);
         console.log(resutls);
       }
     );

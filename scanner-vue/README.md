@@ -4,7 +4,7 @@
 
 ## Build Setup
 
-``` bash
+```bash
 # install dependencies
 npm install
 
@@ -19,3 +19,20 @@ npm run build --report
 ```
 
 For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+
+    "build": "node build/build.js"
+
+BDD
+TDD
+
+Scrum
+
+Visão geral
+
+papeis artefatos cerimonias
+
+backlog sprint backlog
+
+gerencia de projetos , proitotipo , product backlog , riscos , priliminares
+
+projeto compiloador , game execução , strint 1 , monitoramento controle , pos game
